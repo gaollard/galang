@@ -241,12 +241,12 @@ export class Lexer {
    * @desc 前瞻一个 token
    * @returns 
    */
-  lookAhead() {
+  LookAhead() {
     const token = this.read()
-    if (token) {
+    if (token && token.loc) {
       this.current = token.loc.start
     }
-    return token;
+    return token.type;
   }
 
   /**

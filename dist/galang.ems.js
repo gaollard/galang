@@ -1,3 +1,210 @@
+var Node = function Node() {
+  // this.start = null;
+  // this.end = null;
+  // this.loc = null;
+};
+
+var Program = /*@__PURE__*/(function (Node) {
+  function Program(params) {
+    Node.call(this, params);
+    this.type = 'Program';
+    this.body = [];
+  }
+
+  if ( Node ) Program.__proto__ = Node;
+  Program.prototype = Object.create( Node && Node.prototype );
+  Program.prototype.constructor = Program;
+
+  return Program;
+}(Node));
+var FalseExp = /*@__PURE__*/(function (Node) {
+  function FalseExp(params) {
+    Node.call(this, params);
+    this.type = 'FalseExp';
+  }
+
+  if ( Node ) FalseExp.__proto__ = Node;
+  FalseExp.prototype = Object.create( Node && Node.prototype );
+  FalseExp.prototype.constructor = FalseExp;
+
+  return FalseExp;
+}(Node));
+
+var TrueExp = /*@__PURE__*/(function (Node) {
+  function TrueExp(params) {
+    Node.call(this, params);
+    this.type = 'TrueExp';
+  }
+
+  if ( Node ) TrueExp.__proto__ = Node;
+  TrueExp.prototype = Object.create( Node && Node.prototype );
+  TrueExp.prototype.constructor = TrueExp;
+
+  return TrueExp;
+}(Node));
+
+var NullExp = /*@__PURE__*/(function (Node) {
+  function NullExp(params) {
+    Node.call(this, params);
+    this.type = 'NullExp';
+  }
+
+  if ( Node ) NullExp.__proto__ = Node;
+  NullExp.prototype = Object.create( Node && Node.prototype );
+  NullExp.prototype.constructor = NullExp;
+
+  return NullExp;
+}(Node));
+
+var Numeral = /*@__PURE__*/(function (Node) {
+  function Numeral(params, value) {
+    Node.call(this, params);
+    this.type = 'Numeral';
+    this.value = value;
+  }
+
+  if ( Node ) Numeral.__proto__ = Node;
+  Numeral.prototype = Object.create( Node && Node.prototype );
+  Numeral.prototype.constructor = Numeral;
+
+  return Numeral;
+}(Node));
+
+var StringLiteral = /*@__PURE__*/(function (Node) {
+  function StringLiteral(params, value) {
+    Node.call(this, params);
+    this.type = 'StringLiteral';
+    this.value = value;
+  }
+
+  if ( Node ) StringLiteral.__proto__ = Node;
+  StringLiteral.prototype = Object.create( Node && Node.prototype );
+  StringLiteral.prototype.constructor = StringLiteral;
+
+  return StringLiteral;
+}(Node));
+
+var Identifier = /*@__PURE__*/(function (Node) {
+  function Identifier(params, value) {
+    Node.call(this, params);
+    this.type = 'Identifier';
+    this.value = value;
+  }
+
+  if ( Node ) Identifier.__proto__ = Node;
+  Identifier.prototype = Object.create( Node && Node.prototype );
+  Identifier.prototype.constructor = Identifier;
+
+  return Identifier;
+}(Node));
+
+var UpdateExp = /*@__PURE__*/(function (Node) {
+  function UpdateExp(params, op, id) {
+    Node.call(this, params);
+    this.type = 'UpdateExp';
+    this.op = op;
+    this.id = id;
+  }
+
+  if ( Node ) UpdateExp.__proto__ = Node;
+  UpdateExp.prototype = Object.create( Node && Node.prototype );
+  UpdateExp.prototype.constructor = UpdateExp;
+
+  return UpdateExp;
+}(Node));
+
+var UnaryExp = /*@__PURE__*/(function (Node) {
+  function UnaryExp(params, op, exp) {
+    Node.call(this, params);
+    this.type = 'UnaryExp';
+    this.op = op;
+    this.exp = exp;
+  }
+
+  if ( Node ) UnaryExp.__proto__ = Node;
+  UnaryExp.prototype = Object.create( Node && Node.prototype );
+  UnaryExp.prototype.constructor = UnaryExp;
+
+  return UnaryExp;
+}(Node));
+
+var BinaryExp = /*@__PURE__*/(function (Node) {
+  function BinaryExp(params, op, lExp, rExp) {
+    Node.call(this, params);
+    this.type = 'BinaryExp';
+    this.op = op;
+    this.left = lExp;
+    this.right = rExp;
+  }
+
+  if ( Node ) BinaryExp.__proto__ = Node;
+  BinaryExp.prototype = Object.create( Node && Node.prototype );
+  BinaryExp.prototype.constructor = BinaryExp;
+
+  return BinaryExp;
+}(Node));
+
+var ConditionExp = /*@__PURE__*/(function (Node) {
+  function ConditionExp(params, test, consequent, alternate) {
+    Node.call(this, params);
+    this.type = 'ConditionExp';
+    this.test = test;
+    this.consequent = consequent;
+    this.alternate = alternate;
+  }
+
+  if ( Node ) ConditionExp.__proto__ = Node;
+  ConditionExp.prototype = Object.create( Node && Node.prototype );
+  ConditionExp.prototype.constructor = ConditionExp;
+
+  return ConditionExp;
+}(Node));
+
+var AssignmentExp = /*@__PURE__*/(function (Node) {
+  function AssignmentExp(params, left, right) {
+    Node.call(this, params);
+    this.type = 'AssignmentExp';
+    this.left = left;
+    this.right = right;
+  }
+
+  if ( Node ) AssignmentExp.__proto__ = Node;
+  AssignmentExp.prototype = Object.create( Node && Node.prototype );
+  AssignmentExp.prototype.constructor = AssignmentExp;
+
+  return AssignmentExp;
+}(Node));
+
+var Parser = function Parser(options) {
+  this.lexer = options.lexer;
+  this.tokens = options.tokens;
+  this.options = this.options;
+};
+
+Parser.prototype.parse = function parse () {
+  return this.parseTopLevel()
+};
+
+Parser.prototype.LookAhead = function LookAhead () {
+  return this.lexer.LookAhead();
+};
+
+Parser.prototype.nextToken = function nextToken () {
+  return this.lexer.read();
+};
+
+Parser.prototype.eat = function eat (type) {
+  if (this.LookAhead() === type) {
+    this.lexer.read();
+  } else {
+    this.raise('need ${type}');
+  }
+};
+
+Parser.prototype.raise = function raise (msg) {
+  throw new SyntaxError(msg);
+};
+
 var TokenType = function TokenType(label, opt) {
   if ( opt === void 0 ) opt = {};
 
@@ -49,6 +256,7 @@ var types = {
   op_le:      new TokenType("<="),
   op_gt:      new TokenType(">"),
   op_ge:      new TokenType(">="),
+  
   op_eq:      new TokenType("=="),
   op_ne:      new TokenType("!="),
 
@@ -88,6 +296,210 @@ var regUtil = {
   numbers: /[0-9]/,            // 数字
   letters: /[a-z]/i,           // 字母
   identifier: /[_\da-zA-Z]/i   // 标志符
+};
+
+/*
+  exp         ::= expAssign
+  expAssign   ::= expCond { "=" expAssign }
+  expCond     ::= expOr {"?" expAssign ":" expAssign }
+  expOr       ::= expAnd {'||' expAnd}
+  expAnd      ::= expQul {'&&' expQul}
+  expQul      ::= expCmp {(‘!=’ | ‘==’) expCmp}
+  expCmp      ::= expAdd {(‘<’ | ‘>’ | ‘<=’ | ‘>=’) expAdd}
+  expAdd      ::= expMul {(‘+’ | ‘-’) expMul}
+  expMul      ::= expUna {('*' | '/' | '%') expUna}
+  expUna      ::= {(‘!’ | ‘-’)} expUpt
+  expUpt      ::= expBasic {('++' | '--')}
+  expBasic    ::= null | false | true | Numeral | LiteralString | Identifier | '(' exp ')'
+*/
+
+var pp$1 = Parser.prototype;
+
+pp$1.parseBasicExp = function () {
+  switch (this.LookAhead()) {
+    case types._true.label:
+      return new TrueExp({}, this.nextToken().value);
+    case types._false.label:
+      return new FalseExp({}, this.nextToken().value);
+    case types._null.label:
+      return new NullExp({}, this.nextToken().value);
+
+    case types.number.label:
+      return new Numeral({}, this.nextToken().value);
+    case types.string.label:
+      return new StringLiteral({}, this.nextToken().value);
+    case types.name.label:
+      return new Identifier({}, this.nextToken().value)
+
+    case types.parenL.label: {
+      this.nextToken();
+      var exp = this.parseExp();
+      this.eat(types.parenR.label);
+      return exp;
+    }
+  }
+};
+
+// x++ ++x x-- --x
+pp$1.parseUptEpx = function () {
+  switch(this.LookAhead()) {
+    case types.op_inc.label:
+    case types.op_dec.label: {
+      var n = new UpdateExp({}, this.nextToken().value, this.parseBasicExp());
+      n.prefix = true;
+      return n;
+    }
+  }
+
+  var exp = this.parseBasicExp();
+
+  switch(this.LookAhead()) {
+    case types.op_inc.label:
+    case types.op_dec.label:
+      return new UpdateExp({}, this.nextToken().value, exp);
+  }
+
+  return exp;
+};
+
+// (- | !) x
+pp$1.parseUnaExp = function () {
+  switch(this.LookAhead()) {
+    case types.op_not.label:
+    case types.op_minus.label:
+      return new UnaryExp({}, this.nextToken().value, this.parseUnaExp());
+  }
+  return this.parseUptEpx();
+};
+
+// x (* | / | %) y
+pp$1.parseMulExp = function () {
+  var exp = this.parseUnaExp();
+  while(this.LookAhead() !== types.eof.label) {
+    switch(this.LookAhead()) {
+      case types.op_mod.label:
+      case types.op_div.label:
+      case types.op_mul.label:
+        exp = new BinaryExp({}, this.nextToken().value, exp, this.parseUnaExp());
+        break;
+      default:
+        return exp;
+    }
+  }
+  return exp;
+};
+
+// x (+ | -) y
+pp$1.parseAddExp = function () {
+  var exp = this.parseMulExp();
+  while(this.LookAhead() !== types.eof.label) {
+    switch(this.LookAhead()) {
+      case types.op_add.label:
+      case types.op_minus.label: {
+        exp = new BinaryExp({}, this.nextToken().value, exp, this.parseMulExp());
+        break;
+      }
+      default:
+        return exp;
+    }
+  }
+  return exp;
+};
+
+// x (> | >= | < | <=) y
+pp$1.parseCmpExp = function () {
+  var exp = this.parseAddExp();
+  switch(this.LookAhead()) {
+    case types.op_lt.label:
+    case types.op_le.label:
+    case types.op_ge.label:
+    case types.op_gt.label:
+      return new BinaryExp({}, this.nextToken().value, exp, this.parseCmpExp());
+  }
+  return exp;
+};
+
+// x == y
+// x != y
+pp$1.parseQulExp = function () {
+  var exp = this.parseCmpExp();
+  switch(this.LookAhead()) {
+    case types.op_eq.label:
+    case types.op_ne.label:
+      return new BinaryExp({}, this.nextToken().value, exp, this.parseQulExp());
+  }
+  return exp;
+};
+
+// x && y
+pp$1.parseAndExp = function () {
+  var exp = this.parseQulExp();
+  switch(this.LookAhead()) {
+    case types.op_and.label:
+      return new BinaryExp({}, this.nextToken().value, exp, this.parseAndExp());
+  }
+  return exp;
+};
+
+// x || y
+pp$1.parseOrExp = function () {
+  var exp = this.parseAndExp();
+  switch(this.LookAhead()) {
+    case types.op_or.label:
+      return new BinaryExp({}, this.nextToken().value, exp, this.parseOrExp());
+  }
+  return exp;
+};
+
+// x ? y : z
+pp$1.parseConditional = function() {
+  var exp = this.parseOrExp();
+  while (this.LookAhead() && this.LookAhead() == types.question.label) {
+    this.nextToken();
+    var consequent = this.parseAssignExp();
+    if (this.LookAhead() && this.LookAhead() == types.colon.label) {
+      this.nextToken();
+      var alternate = this.parseAssignExp();
+      exp = new ConditionExp({}, exp, consequent, alternate);
+    } else {
+      this.raise('parseConditional error');
+    }
+  }
+  return exp;
+};
+
+// x = exp
+pp$1.parseAssignExp = function () {
+  var exp = this.parseConditional();
+  if (this.LookAhead() && this.LookAhead() == types.op_assign.label) {
+    if (exp.type !== "Identifier") {
+      this.raise("Invalid left-hand side in assignment");
+    }
+    this.nextToken();
+    exp = new AssignmentExp({}, exp, this.parseAssignExp());
+  }
+  return exp
+};
+
+pp$1.parseExp = function() {
+  return this.parseAssignExp();
+};
+
+var pp = Parser.prototype;
+
+// parse program
+pp.parseTopLevel = function() {
+  var node = new Program();
+  while (this.lexer.LookAhead() !== types.eof.label) {
+    var stmt = this.parseStatement();
+    node.body.push(stmt);
+  }
+  return node;
+};
+
+// parse stat 目录只支持表达式
+pp.parseStatement = function() {
+  return this.parseExp();
 };
 
 var Token = function Token(type, value) {
@@ -328,12 +740,12 @@ Lexer.prototype.read = function read () {
  * @desc 前瞻一个 token
  * @returns 
  */
-Lexer.prototype.lookAhead = function lookAhead () {
+Lexer.prototype.LookAhead = function LookAhead () {
   var token = this.read();
-  if (token) {
+  if (token && token.loc) {
     this.current = token.loc.start;
   }
-  return token;
+  return token.type;
 };
 
 /**
@@ -366,4 +778,4 @@ Lexer.prototype.isEof = function isEof () {
   return this.current === this.input.length
 };
 
-export { Lexer };
+export { Lexer, Parser };

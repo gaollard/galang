@@ -16,12 +16,26 @@
   // var code = `  2  1`;
   // var code = `"111'"`
   // var code = '10 * 10 + age'
-  var code = `
-  let id = 10;
-  // 注释
-  /*注释*
-  `
+  // var code = `
+  //   10 * 20 * 2++
+  //   10 * 20
+  //   1 - 2 + 1
+  //   a = a ? b = d : c ? d : e
+  //   a++
+  //   ++a
+  // `
+  
+  // var code = `a = b = c`
+  // var code = `a = b ? c : d`
+  // var code = `a++ = b++`
+  // var code = `a = b = c++`
+  var code = `a = b || c ? d = e : f == g++`
   var lexer = new galang.Lexer(code);
-  console.log(lexer.tokenize());
+  var parser = new galang.Parser({
+    lexer
+  });
+
+  // debugger
+  console.log(parser.parse())
 </script>
 </html>
