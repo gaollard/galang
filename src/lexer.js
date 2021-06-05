@@ -106,6 +106,12 @@ export class Lexer {
       case ')': {
         return this.genToken(types.parenR, mchar, this.current - 1)
       }
+      case '{': {
+        return this.genToken(types.braceL, mchar, this.current - 1)
+      }
+      case '}': {
+        return this.genToken(types.braceR, mchar, this.current - 1)
+      }
       case ';': {
         return this.genToken(types.semi, mchar, this.current - 1)
       }
