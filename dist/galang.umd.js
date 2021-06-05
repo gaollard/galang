@@ -107,6 +107,11 @@
     this.input = input;
   };
 
+  /**
+   * @desc 是否为关键字
+   * @param {*} str 
+   * @returns 
+   */
   Lexer.prototype.isKeyword = function isKeyword (str) {
     return Object.keys(keywords).includes(str)
   };
@@ -124,9 +129,33 @@
     return tokens
   };
 
+  /**
+   * @desc 过滤无效字符
+   */
   Lexer.prototype.skipSpaceAndComment = function skipSpaceAndComment () {
-    while (this.input[this.current] === ' ') {
-      this.current++;
+    while (!this.isEof()) {
+      var ch = this.input[this.current];
+      var newline = /[\n\r]/;
+      if (ch === '/') {
+        if (this.input[this.current + 1] === '/') {
+          this.current += 2;
+          while (!this.isEof() && !newline.test(this.input[this.current])) {
+            this.current++;
+          }
+        } else if (this.input[this.current + 1] === '*') {
+          var i = this.input.indexOf('*/', this.current + 2);
+          if (i < 0) {
+            this.raise(this.current - 2, 'Unterminated comment');
+          }
+          this.current = i + 2;
+        } else {
+          break;
+        }
+      } else if (ch === '\n' || ch === '\t' || ch === " " || ch === "\r" || ch === "\f") {
+        this.current++;
+      } else {
+        break;
+      }
     }
   };
 
@@ -329,6 +358,10 @@
       };
     }
     return token
+  };
+
+  Lexer.prototype.raise = function raise (pos, message) {
+    throw new SyntaxError(message + " in " + pos);
   };
 
   /**
