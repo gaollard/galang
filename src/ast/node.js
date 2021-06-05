@@ -105,3 +105,26 @@ export class AssignmentExp extends Node {
     this.right = right;
   }
 }
+
+export class EmptyStat extends Node {
+  constructor(params) {
+    super(params);
+  }
+}
+
+export class WhileStat extends Node {
+  constructor(params, test, body) {
+    super(params);
+    this.type = 'WhileStat';
+    this.test = test;
+    this.body = body;
+  }
+}
+
+export class BlockStat extends Node {
+  constructor(params, body) {
+    super(params);
+    this.type = 'BlockStat';
+    this.body = body;
+  }
+}

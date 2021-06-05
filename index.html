@@ -29,7 +29,10 @@
   // var code = `a = b ? c : d`
   // var code = `a++ = b++`
   // var code = `a = b = c++`
-  var code = `a = b || c ? d = e : f == g++`
+  // var code = `;a = b || c ? d = e : f == g++`
+
+  var code = `{}`
+
   var lexer = new galang.Lexer(code);
   var parser = new galang.Parser({
     lexer

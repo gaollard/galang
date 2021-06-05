@@ -17,11 +17,18 @@ export class Parser {
     return this.lexer.read();
   }
 
+  unexpected() {}
+
+  expect (type) {
+    this.eat(type) || this.raise(`need ${type}`)
+  }
+  
   eat(type) {
     if (this.LookAhead() === type) {
-      this.lexer.read();
+      this.nextToken();
+      return true;
     } else {
-      this.raise('need ${type}')
+      return false;
     }
   }
 

@@ -181,6 +181,47 @@
     return AssignmentExp;
   }(Node));
 
+  var EmptyStat = /*@__PURE__*/(function (Node) {
+    function EmptyStat(params) {
+      Node.call(this, params);
+    }
+
+    if ( Node ) EmptyStat.__proto__ = Node;
+    EmptyStat.prototype = Object.create( Node && Node.prototype );
+    EmptyStat.prototype.constructor = EmptyStat;
+
+    return EmptyStat;
+  }(Node));
+
+  /*@__PURE__*/((function (Node) {
+    function WhileStat(params, test, body) {
+      Node.call(this, params);
+      this.type = 'WhileStat';
+      this.test = test;
+      this.body = body;
+    }
+
+    if ( Node ) WhileStat.__proto__ = Node;
+    WhileStat.prototype = Object.create( Node && Node.prototype );
+    WhileStat.prototype.constructor = WhileStat;
+
+    return WhileStat;
+  })(Node));
+
+  var BlockStat = /*@__PURE__*/(function (Node) {
+    function BlockStat(params, body) {
+      Node.call(this, params);
+      this.type = 'BlockStat';
+      this.body = body;
+    }
+
+    if ( Node ) BlockStat.__proto__ = Node;
+    BlockStat.prototype = Object.create( Node && Node.prototype );
+    BlockStat.prototype.constructor = BlockStat;
+
+    return BlockStat;
+  }(Node));
+
   var Parser = function Parser(options) {
     this.lexer = options.lexer;
     this.tokens = options.tokens;
@@ -199,11 +240,18 @@
     return this.lexer.read();
   };
 
+  Parser.prototype.unexpected = function unexpected () {};
+
+  Parser.prototype.expect = function expect (type) {
+    this.eat(type) || this.raise(("need " + type));
+  };
+    
   Parser.prototype.eat = function eat (type) {
     if (this.LookAhead() === type) {
-      this.lexer.read();
+      this.nextToken();
+      return true;
     } else {
-      this.raise('need ${type}');
+      return false;
     }
   };
 
@@ -319,9 +367,9 @@
     expBasic    ::= null | false | true | Numeral | LiteralString | Identifier | '(' exp ')'
   */
 
-  var pp$1 = Parser.prototype;
+  var pp$2 = Parser.prototype;
 
-  pp$1.parseBasicExp = function () {
+  pp$2.parseBasicExp = function () {
     switch (this.LookAhead()) {
       case types._true.label:
         return new TrueExp({}, this.nextToken().value);
@@ -347,7 +395,7 @@
   };
 
   // x++ ++x x-- --x
-  pp$1.parseUptEpx = function () {
+  pp$2.parseUptEpx = function () {
     switch(this.LookAhead()) {
       case types.op_inc.label:
       case types.op_dec.label: {
@@ -369,7 +417,7 @@
   };
 
   // (- | !) x
-  pp$1.parseUnaExp = function () {
+  pp$2.parseUnaExp = function () {
     switch(this.LookAhead()) {
       case types.op_not.label:
       case types.op_minus.label:
@@ -379,7 +427,7 @@
   };
 
   // x (* | / | %) y
-  pp$1.parseMulExp = function () {
+  pp$2.parseMulExp = function () {
     var exp = this.parseUnaExp();
     while(this.LookAhead() !== types.eof.label) {
       switch(this.LookAhead()) {
@@ -396,7 +444,7 @@
   };
 
   // x (+ | -) y
-  pp$1.parseAddExp = function () {
+  pp$2.parseAddExp = function () {
     var exp = this.parseMulExp();
     while(this.LookAhead() !== types.eof.label) {
       switch(this.LookAhead()) {
@@ -413,7 +461,7 @@
   };
 
   // x (> | >= | < | <=) y
-  pp$1.parseCmpExp = function () {
+  pp$2.parseCmpExp = function () {
     var exp = this.parseAddExp();
     switch(this.LookAhead()) {
       case types.op_lt.label:
@@ -427,7 +475,7 @@
 
   // x == y
   // x != y
-  pp$1.parseQulExp = function () {
+  pp$2.parseQulExp = function () {
     var exp = this.parseCmpExp();
     switch(this.LookAhead()) {
       case types.op_eq.label:
@@ -438,7 +486,7 @@
   };
 
   // x && y
-  pp$1.parseAndExp = function () {
+  pp$2.parseAndExp = function () {
     var exp = this.parseQulExp();
     switch(this.LookAhead()) {
       case types.op_and.label:
@@ -448,7 +496,7 @@
   };
 
   // x || y
-  pp$1.parseOrExp = function () {
+  pp$2.parseOrExp = function () {
     var exp = this.parseAndExp();
     switch(this.LookAhead()) {
       case types.op_or.label:
@@ -458,7 +506,7 @@
   };
 
   // x ? y : z
-  pp$1.parseConditional = function() {
+  pp$2.parseConditional = function() {
     var exp = this.parseOrExp();
     while (this.LookAhead() && this.LookAhead() == types.question.label) {
       this.nextToken();
@@ -475,7 +523,7 @@
   };
 
   // x = exp
-  pp$1.parseAssignExp = function () {
+  pp$2.parseAssignExp = function () {
     var exp = this.parseConditional();
     if (this.LookAhead() && this.LookAhead() == types.op_assign.label) {
       if (exp.type !== "Identifier") {
@@ -487,14 +535,21 @@
     return exp
   };
 
-  pp$1.parseExp = function() {
+  pp$2.parseExp = function() {
     return this.parseAssignExp();
   };
 
-  var pp = Parser.prototype;
+  var pp$1 = Parser.prototype;
+
+  /*
+  stat ::=  ‘;’
+  	| break
+  	| do block end
+  	| while '(' exp ')' block end
+  */
 
   // parse program
-  pp.parseTopLevel = function() {
+  pp$1.parseTopLevel = function() {
     var node = new Program();
     while (this.lexer.LookAhead() !== types.eof.label) {
       var stmt = this.parseStatement();
@@ -504,8 +559,49 @@
   };
 
   // parse stat 目录只支持表达式
-  pp.parseStatement = function() {
-    return this.parseExp();
+  pp$1.parseStatement = function() {
+    switch(this.LookAhead()){
+      case types.semi.label:
+        return this.parseEmptyStat();
+      case types._while.label:
+        return this.parseWhileStat();
+      case types.parenL.label: {
+        return this.parseBlock();
+      }
+      default:
+        return this.parseExp();
+    }
+  };
+
+  // 空语句
+  pp$1.parseEmptyStat = function () {
+    this.nextToken();
+    return new EmptyStat();
+  };
+
+  // while(exp) block 
+  pp$1.parseWhileStat = function() {
+    this.nextToken();
+    this.parseExp();
+    this.parseBlock();
+    return 
+  };
+
+  var pp = Parser.prototype;
+
+  pp.parseBlock = function() {
+    this.eat(types.parenL.label);
+
+    var stats = [];
+
+    while (this.LookAhead() !== types.eof.label && this.LookAhead() !== types.parenR.label) {
+      var stmt = this.parseStatement();
+      stats.push(stmt);
+    }
+
+    this.eat(types.parenR.label);
+
+    return new BlockStat({}, stats)
   };
 
   var Token = function Token(type, value) {
