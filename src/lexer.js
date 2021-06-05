@@ -14,6 +14,11 @@ export class Lexer {
     this.input = input;
   }
 
+  /**
+   * @desc 是否为关键字
+   * @param {*} str 
+   * @returns 
+   */
   isKeyword(str) {
     return Object.keys(keywords).includes(str)
   }
@@ -31,9 +36,33 @@ export class Lexer {
     return tokens
   }
 
+  /**
+   * @desc 过滤无效字符
+   */
   skipSpaceAndComment() {
-    while (this.input[this.current] === ' ') {
-      this.current++
+    while (!this.isEof()) {
+      const ch = this.input[this.current];
+      const newline = /[\n\r]/;
+      if (ch === '/') {
+        if (this.input[this.current + 1] === '/') {
+          this.current += 2;
+          while (!this.isEof() && !newline.test(this.input[this.current])) {
+            this.current++;
+          }
+        } else if (this.input[this.current + 1] === '*') {
+          const i = this.input.indexOf('*/', this.current + 2);
+          if (i < 0) {
+            this.raise(this.current - 2, 'Unterminated comment');
+          }
+          this.current = i + 2;
+        } else {
+          break;
+        }
+      } else if (ch === '\n' || ch === '\t' || ch === " " || ch === "\r" || ch === "\f") {
+        this.current++;
+      } else {
+        break;
+      }
     }
   }
 
@@ -236,6 +265,10 @@ export class Lexer {
       }
     }
     return token
+  }
+
+  raise(pos, message) {
+    throw new SyntaxError(message + ` in ${pos}`);
   }
 
   /**

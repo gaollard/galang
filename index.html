@@ -16,7 +16,11 @@
   // var code = `  2  1`;
   // var code = `"111'"`
   // var code = '10 * 10 + age'
-  var code = `let id = 10`
+  var code = `
+  let id = 10;
+  // 注释
+  /*注释*
+  `
   var lexer = new galang.Lexer(code);
   console.log(lexer.tokenize());
 </script>
