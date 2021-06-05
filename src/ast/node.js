@@ -147,3 +147,35 @@ export class VariableDeclarator extends Node {
   }
 }
 
+export class SwitchStatement extends Node {
+  constructor(params, discriminant, cases) {
+    super(params);
+    this.type = 'SwitchStatement';
+    this.discriminant = discriminant;
+    this.cases = cases;
+  }
+}
+
+export class SwitchCase extends Node {
+  constructor(params, test, consequent) {
+    super(params);
+    this.type = 'SwitchCase';
+    this.test = test;
+    this.consequent = consequent;
+  }
+}
+
+export class BreakStatement extends Node {
+  constructor(params, label) {
+    super(params);
+    this.type = 'BreakStatement';
+    this.label = label || null;
+  }
+}
+
+export class DefaultStatement extends Node {
+  constructor(params) {
+    super(params);
+    this.type = 'DefaultStatement';
+  }
+}

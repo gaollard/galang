@@ -252,6 +252,63 @@
     return VariableDeclarator;
   }(Node));
 
+  var SwitchStatement = /*@__PURE__*/(function (Node) {
+    function SwitchStatement(params, discriminant, cases) {
+      Node.call(this, params);
+      this.type = 'SwitchStatement';
+      this.discriminant = discriminant;
+      this.cases = cases;
+    }
+
+    if ( Node ) SwitchStatement.__proto__ = Node;
+    SwitchStatement.prototype = Object.create( Node && Node.prototype );
+    SwitchStatement.prototype.constructor = SwitchStatement;
+
+    return SwitchStatement;
+  }(Node));
+
+  var SwitchCase = /*@__PURE__*/(function (Node) {
+    function SwitchCase(params, test, consequent) {
+      Node.call(this, params);
+      this.type = 'SwitchCase';
+      this.test = test;
+      this.consequent = consequent;
+    }
+
+    if ( Node ) SwitchCase.__proto__ = Node;
+    SwitchCase.prototype = Object.create( Node && Node.prototype );
+    SwitchCase.prototype.constructor = SwitchCase;
+
+    return SwitchCase;
+  }(Node));
+
+  /*@__PURE__*/((function (Node) {
+    function BreakStatement(params, label) {
+      Node.call(this, params);
+      this.type = 'BreakStatement';
+      this.label = label || null;
+    }
+
+    if ( Node ) BreakStatement.__proto__ = Node;
+    BreakStatement.prototype = Object.create( Node && Node.prototype );
+    BreakStatement.prototype.constructor = BreakStatement;
+
+    return BreakStatement;
+  })(Node));
+
+  /*@__PURE__*/((function (Node) {
+    function DefaultStatement(params) {
+      Node.call(this, params);
+      this.type = 'DefaultStatement';
+    }
+
+    if ( Node ) DefaultStatement.__proto__ = Node;
+    DefaultStatement.prototype = Object.create( Node && Node.prototype );
+    DefaultStatement.prototype.constructor = DefaultStatement;
+
+    return DefaultStatement;
+  })(Node));
+
   var Parser = function Parser(options) {
     this.lexer = options.lexer;
     this.tokens = options.tokens;
@@ -588,8 +645,10 @@
 
   /*
   stat ::=  ‘;’
-  	| while '(' exp ')' block end
-    | "let"
+  	| WhileStat https://www.processon.com/diagraming/60bbcba00e3e7468f4b8af35
+    | VariableDeclaration https://www.processon.com/diagraming/60b9de0ee401fd4c8ba4beaf
+    | SwitchStat
+    | BreakStatement
   */
 
   pp$1.parseTopLevel = function () {
@@ -605,13 +664,14 @@
     switch (this.LookAhead()) {
       case types.semi.label:
         return this.parseEmptyStat()
+      case types.braceL.label:
+        return this.parseBlock()
       case types._while.label:
         return this.parseWhileStat()
-      case types.braceL.label: {
-        return this.parseBlock()
-      }
       case types._let.label:
         return this.parseVarStatement()
+      case types._switch.label:
+        return this.parseSwitchStat()
       default:
         return this.parseExp()
     }
@@ -629,8 +689,8 @@
     return new WhileStat({}, test, block)
   };
 
+  // VarStatment ---------------------------------------------------------------------------------
   pp$1.parseVarStatement = function () {
-    debugger
     var kind = this.nextToken().value;
     return new VariableDeclaration({}, kind, this.parseVar())
   };
@@ -657,6 +717,52 @@
     } else {
       this.raise('invalid Identifier');
     }
+  };
+
+  pp$1.parseSwitchStat = function () {
+    this.expect(types._switch.label);
+    this.expect(types.parenL.label);
+    var discriminant = this.parseExp();
+    this.expect(types.parenR.label);
+    this.expect(types.braceL.label);
+
+    var cases = [];
+
+    for (;;) {
+      if (this.LookAhead() === types._case.label) {
+        this.nextToken();
+        var test = this.parseExp();
+        this.expect(types.colon.label);
+        var consequent = [];
+        while (
+          this.LookAhead() &&
+          this.LookAhead() !== types._case.label &&
+          this.LookAhead() !== types._default.label &&
+          this.LookAhead() !== types.braceR.label
+        ) {
+          consequent.push(this.parseStatement());
+        }
+        cases.push(new SwitchCase({}, test, consequent));
+      } else if (this.LookAhead() === types._default.label) {
+        this.nextToken();
+        this.expect(types.colon.label);
+        var consequent$1 = [];
+        while (
+          this.LookAhead() &&
+          this.LookAhead() !== types._case.label &&
+          this.LookAhead() !== types.braceR.label
+        ) {
+          consequent$1.push(this.parseStatement());
+        }
+        cases.push(new SwitchCase({}, null, consequent$1));
+      } else {
+        break
+      }
+    }
+
+    this.expect(types.braceR.label);
+
+    return new SwitchStatement({}, discriminant, cases)
   };
 
   var pp = Parser.prototype;

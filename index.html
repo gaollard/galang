@@ -33,7 +33,18 @@
 
   // var code = `{ a = 10 } while(1) { a++ }`;
 
-  var code = `let a = 10, b = 20, c, d = b++`
+  // var code = `let a = 10, b = 20, c, d = b++`
+
+  var code = `
+    switch(a) {
+      case 1:
+        a;
+      case 2:
+        b;
+      default:
+        c
+    }
+  `
 
   var lexer = new galang.Lexer(code);
   var parser = new galang.Parser({
