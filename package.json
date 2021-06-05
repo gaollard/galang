@@ -1,0 +1,17 @@
+{
+  "name": "01-simple",
+  "version": "1.0.0",
+  "description": "",
+  "main": "rollup.config.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "rollup -c rollup.config.js --watch"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "rollup": "^2.50.0",
+    "rollup-plugin-buble": "^0.19.8"
+  }
+}
