@@ -36,7 +36,13 @@ export const types = {
   question:   new TokenType("?"),
 
   // OP
-  op_assign:  new TokenType("assign"), // =, +=, -=, *=, /=, %=
+  op_assign:    new TokenType("="),
+  op_assign_1:  new TokenType("+="),
+  op_assign_2:  new TokenType("-="),
+  op_assign_3:  new TokenType("*="),
+  op_assign_4:  new TokenType("/="),
+  op_assign_5:  new TokenType("%="),
+
   op_minus:   new TokenType("-"),
   op_add:     new TokenType("+"),
   op_mul:     new TokenType("*"),

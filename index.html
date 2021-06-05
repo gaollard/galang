@@ -31,14 +31,16 @@
   // var code = `a = b = c++`
   // var code = `;a = b || c ? d = e : f == g++`
 
-  var code = `{}`
+  // var code = `{ a = 10 } while(1) { a++ }`;
+
+  var code = `let a = 10, b = 20, c, d = b++`
 
   var lexer = new galang.Lexer(code);
   var parser = new galang.Parser({
     lexer
   });
 
-  // debugger
+  debugger
   console.log(parser.parse())
 </script>
 </html>

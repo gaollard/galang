@@ -175,12 +175,21 @@ pp.parseConditional = function() {
 // x = exp
 pp.parseAssignExp = function () {
   let exp = this.parseConditional();
-  if (this.LookAhead() && this.LookAhead() == tt.op_assign.label) {
-    if (exp.type !== "Identifier") {
-      this.raise("Invalid left-hand side in assignment");
+  if (this.LookAhead()) {
+    switch (this.LookAhead()) {
+      case tt.op_assign:
+      case tt.op_assign_1:
+      case tt.op_assign_2:
+      case tt.op_assign_3:
+      case tt.op_assign_4:
+      case tt.op_assign_5: {
+        if (exp.type !== "Identifier") {
+          this.raise("Invalid left-hand side in assignment");
+        }
+        this.nextToken()
+        exp = new AssignmentExp({}, exp, this.parseAssignExp())
+      }
     }
-    this.nextToken()
-    exp = new AssignmentExp({}, exp, this.parseAssignExp())
   }
   return exp
 }

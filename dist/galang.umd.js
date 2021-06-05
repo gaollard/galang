@@ -193,7 +193,7 @@
     return EmptyStat;
   }(Node));
 
-  /*@__PURE__*/((function (Node) {
+  var WhileStat = /*@__PURE__*/(function (Node) {
     function WhileStat(params, test, body) {
       Node.call(this, params);
       this.type = 'WhileStat';
@@ -206,7 +206,7 @@
     WhileStat.prototype.constructor = WhileStat;
 
     return WhileStat;
-  })(Node));
+  }(Node));
 
   var BlockStat = /*@__PURE__*/(function (Node) {
     function BlockStat(params, body) {
@@ -220,6 +220,36 @@
     BlockStat.prototype.constructor = BlockStat;
 
     return BlockStat;
+  }(Node));
+
+  var VariableDeclaration = /*@__PURE__*/(function (Node) {
+    function VariableDeclaration(params, kind, declarations) {
+      Node.call(this, params);
+      this.type = 'VariableDeclaration';
+      this.kind = kind;
+      this.declarations = declarations;
+    }
+
+    if ( Node ) VariableDeclaration.__proto__ = Node;
+    VariableDeclaration.prototype = Object.create( Node && Node.prototype );
+    VariableDeclaration.prototype.constructor = VariableDeclaration;
+
+    return VariableDeclaration;
+  }(Node));
+
+  var VariableDeclarator = /*@__PURE__*/(function (Node) {
+    function VariableDeclarator(params, id, init) {
+      Node.call(this, params);
+      this.type = 'VariableDeclarator';
+      this.id = id;
+      this.init = init;
+    }
+
+    if ( Node ) VariableDeclarator.__proto__ = Node;
+    VariableDeclarator.prototype = Object.create( Node && Node.prototype );
+    VariableDeclarator.prototype.constructor = VariableDeclarator;
+
+    return VariableDeclarator;
   }(Node));
 
   var Parser = function Parser(options) {
@@ -299,7 +329,13 @@
     question:   new TokenType("?"),
 
     // OP
-    op_assign:  new TokenType("assign"), // =, +=, -=, *=, /=, %=
+    op_assign:    new TokenType("="),
+    op_assign_1:  new TokenType("+="),
+    op_assign_2:  new TokenType("-="),
+    op_assign_3:  new TokenType("*="),
+    op_assign_4:  new TokenType("/="),
+    op_assign_5:  new TokenType("%="),
+
     op_minus:   new TokenType("-"),
     op_add:     new TokenType("+"),
     op_mul:     new TokenType("*"),
@@ -525,12 +561,21 @@
   // x = exp
   pp$2.parseAssignExp = function () {
     var exp = this.parseConditional();
-    if (this.LookAhead() && this.LookAhead() == types.op_assign.label) {
-      if (exp.type !== "Identifier") {
-        this.raise("Invalid left-hand side in assignment");
+    if (this.LookAhead()) {
+      switch (this.LookAhead()) {
+        case types.op_assign:
+        case types.op_assign_1:
+        case types.op_assign_2:
+        case types.op_assign_3:
+        case types.op_assign_4:
+        case types.op_assign_5: {
+          if (exp.type !== "Identifier") {
+            this.raise("Invalid left-hand side in assignment");
+          }
+          this.nextToken();
+          exp = new AssignmentExp({}, exp, this.parseAssignExp());
+        }
       }
-      this.nextToken();
-      exp = new AssignmentExp({}, exp, this.parseAssignExp());
     }
     return exp
   };
@@ -543,63 +588,90 @@
 
   /*
   stat ::=  ‘;’
-  	| break
-  	| do block end
   	| while '(' exp ')' block end
+    | "let"
   */
 
-  // parse program
-  pp$1.parseTopLevel = function() {
+  pp$1.parseTopLevel = function () {
     var node = new Program();
     while (this.lexer.LookAhead() !== types.eof.label) {
       var stmt = this.parseStatement();
       node.body.push(stmt);
     }
-    return node;
+    return node
   };
 
-  // parse stat 目录只支持表达式
-  pp$1.parseStatement = function() {
-    switch(this.LookAhead()){
+  pp$1.parseStatement = function () {
+    switch (this.LookAhead()) {
       case types.semi.label:
-        return this.parseEmptyStat();
+        return this.parseEmptyStat()
       case types._while.label:
-        return this.parseWhileStat();
-      case types.parenL.label: {
-        return this.parseBlock();
+        return this.parseWhileStat()
+      case types.braceL.label: {
+        return this.parseBlock()
       }
+      case types._let.label:
+        return this.parseVarStatement()
       default:
-        return this.parseExp();
+        return this.parseExp()
     }
   };
 
-  // 空语句
   pp$1.parseEmptyStat = function () {
     this.nextToken();
-    return new EmptyStat();
+    return new EmptyStat()
   };
 
-  // while(exp) block 
-  pp$1.parseWhileStat = function() {
-    this.nextToken();
-    this.parseExp();
-    this.parseBlock();
-    return 
+  pp$1.parseWhileStat = function () {
+    this.eat(types._while.label);
+    var test = this.parseExp();
+    var block = this.parseBlock();
+    return new WhileStat({}, test, block)
+  };
+
+  pp$1.parseVarStatement = function () {
+    debugger
+    var kind = this.nextToken().value;
+    return new VariableDeclaration({}, kind, this.parseVar())
+  };
+
+  pp$1.parseVar = function () {
+    var list = [];
+    for (;;) {
+      var decl = new VariableDeclarator();
+      decl.id = this.parseVarId();
+      if (this.eat(types.op_assign.label)) {
+        decl.init = this.parseExp();
+      } else {
+        decl.init = null;
+      }
+      list.push(decl);
+      if (!this.eat(types.comma.label)) { break }
+    }
+    return list
+  };
+
+  pp$1.parseVarId = function () {
+    if (this.LookAhead() === types.name.label) {
+      return new Identifier({}, this.nextToken().value)
+    } else {
+      this.raise('invalid Identifier');
+    }
   };
 
   var pp = Parser.prototype;
 
-  pp.parseBlock = function() {
-    this.eat(types.parenL.label);
-
+  pp.parseBlock = function () {
+    this.eat(types.braceL.label);
     var stats = [];
-
-    while (this.LookAhead() !== types.eof.label && this.LookAhead() !== types.parenR.label) {
+    while (
+      this.LookAhead() !== types.eof.label &&
+      this.LookAhead() !== types.braceR.label
+    ) {
       var stmt = this.parseStatement();
       stats.push(stmt);
     }
-
-    this.eat(types.parenR.label);
+    this.eat(types.braceR.label);
 
     return new BlockStat({}, stats)
   };
@@ -707,6 +779,12 @@
       case ')': {
         return this.genToken(types.parenR, mchar, this.current - 1)
       }
+      case '{': {
+        return this.genToken(types.braceL, mchar, this.current - 1)
+      }
+      case '}': {
+        return this.genToken(types.braceR, mchar, this.current - 1)
+      }
       case ';': {
         return this.genToken(types.semi, mchar, this.current - 1)
       }
@@ -715,6 +793,9 @@
       }
       case '?': {
         return this.genToken(types.question, mchar, this.current - 1)
+      }
+      case ',': {
+        return this.genToken(types.comma, mchar, this.current - 1)
       }
 
       // == 或 =

@@ -121,6 +121,9 @@ export class Lexer {
       case '?': {
         return this.genToken(types.question, mchar, this.current - 1)
       }
+      case ',': {
+        return this.genToken(types.comma, mchar, this.current - 1)
+      }
 
       // == 或 =
       case '=': {

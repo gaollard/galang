@@ -128,3 +128,22 @@ export class BlockStat extends Node {
     this.body = body;
   }
 }
+
+export class VariableDeclaration extends Node {
+  constructor(params, kind, declarations) {
+    super(params);
+    this.type = 'VariableDeclaration';
+    this.kind = kind;
+    this.declarations = declarations;
+  }
+}
+
+export class VariableDeclarator extends Node {
+  constructor(params, id, init) {
+    super(params);
+    this.type = 'VariableDeclarator';
+    this.id = id;
+    this.init = init;
+  }
+}
+
