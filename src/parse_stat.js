@@ -59,7 +59,6 @@ pp.parseWhileStat = function () {
   return new WhileStat({}, test, block)
 }
 
-// VarStatment ---------------------------------------------------------------------------------
 pp.parseVarStatement = function () {
   const kind = this.nextToken().value
   return new VariableDeclaration({}, kind, this.parseVar())
@@ -92,45 +91,38 @@ pp.parseVarId = function () {
 pp.parseSwitchStat = function () {
   this.expect(tt._switch.label)
   this.expect(tt.parenL.label)
+
   const discriminant = this.parseExp()
+
   this.expect(tt.parenR.label)
   this.expect(tt.braceL.label)
 
-  const cases = []
+  let cases = [];
+  let cur = null;
 
-  for (;;) {
-    if (this.LookAhead() === tt._case.label) {
+  for (let sawDefault = false; this.LookAhead() !== tt.braceR.label;) {
+    let type = this.LookAhead();
+    let isCase = type === tt._case.label;
+    let isDefualt = type === tt._default.label;
+    if (isCase || isDefualt) {
+      let test = null;
       this.nextToken()
-      const test = this.parseExp()
-      this.expect(tt.colon.label)
-      const consequent = []
-      while (
-        this.LookAhead() &&
-        this.LookAhead() !== tt._case.label &&
-        this.LookAhead() !== tt._default.label &&
-        this.LookAhead() !== tt.braceR.label
-      ) {
-        consequent.push(this.parseStatement())
+      if (isCase) {
+        test = this.parseExp();
+      } else {
+        sawDefault = true;
       }
-      cases.push(new SwitchCase({}, test, consequent))
-    } else if (this.LookAhead() === tt._default.label) {
-      this.nextToken()
       this.expect(tt.colon.label)
-      const consequent = []
-      while (
-        this.LookAhead() &&
-        this.LookAhead() !== tt._case.label &&
-        this.LookAhead() !== tt.braceR.label
-      ) {
-        consequent.push(this.parseStatement())
-      }
-      cases.push(new SwitchCase({}, null, consequent))
+      cur = new SwitchCase({}, test, []);
+      cases.push(cur)
     } else {
-      break
+      cur.consequent.push(this.parseStatement());
     }
   }
-
   this.expect(tt.braceR.label)
-
   return new SwitchStatement({}, discriminant, cases)
+}
+
+pp.parseIfStat = function () {
+
 }

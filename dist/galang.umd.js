@@ -689,7 +689,6 @@
     return new WhileStat({}, test, block)
   };
 
-  // VarStatment ---------------------------------------------------------------------------------
   pp$1.parseVarStatement = function () {
     var kind = this.nextToken().value;
     return new VariableDeclaration({}, kind, this.parseVar())
@@ -722,47 +721,38 @@
   pp$1.parseSwitchStat = function () {
     this.expect(types._switch.label);
     this.expect(types.parenL.label);
+
     var discriminant = this.parseExp();
+
     this.expect(types.parenR.label);
     this.expect(types.braceL.label);
 
     var cases = [];
+    var cur = null;
 
-    for (;;) {
-      if (this.LookAhead() === types._case.label) {
+    for (; this.LookAhead() !== types.braceR.label;) {
+      var type = this.LookAhead();
+      var isCase = type === types._case.label;
+      var isDefualt = type === types._default.label;
+      if (isCase || isDefualt) {
+        var test = null;
         this.nextToken();
-        var test = this.parseExp();
-        this.expect(types.colon.label);
-        var consequent = [];
-        while (
-          this.LookAhead() &&
-          this.LookAhead() !== types._case.label &&
-          this.LookAhead() !== types._default.label &&
-          this.LookAhead() !== types.braceR.label
-        ) {
-          consequent.push(this.parseStatement());
+        if (isCase) {
+          test = this.parseExp();
         }
-        cases.push(new SwitchCase({}, test, consequent));
-      } else if (this.LookAhead() === types._default.label) {
-        this.nextToken();
         this.expect(types.colon.label);
-        var consequent$1 = [];
-        while (
-          this.LookAhead() &&
-          this.LookAhead() !== types._case.label &&
-          this.LookAhead() !== types.braceR.label
-        ) {
-          consequent$1.push(this.parseStatement());
-        }
-        cases.push(new SwitchCase({}, null, consequent$1));
+        cur = new SwitchCase({}, test, []);
+        cases.push(cur);
       } else {
-        break
+        cur.consequent.push(this.parseStatement());
       }
     }
-
     this.expect(types.braceR.label);
-
     return new SwitchStatement({}, discriminant, cases)
+  };
+
+  pp$1.parseIfStat = function () {
+
   };
 
   var pp = Parser.prototype;
@@ -795,8 +785,8 @@
 
   /**
    * @desc 是否为关键字
-   * @param {*} str 
-   * @returns 
+   * @param {*} str
+   * @returns
    */
   Lexer.prototype.isKeyword = function isKeyword (str) {
     return Object.keys(keywords).includes(str)
@@ -804,13 +794,14 @@
 
   /**
    * @desc 获取 token 列表
-   * @returns 
+   * @returns
    */
   Lexer.prototype.tokenize = function tokenize () {
-    var token, tokens = [];
-    while (token = this.read()) {
+    var token,
+      tokens = [];
+    while ((token = this.read())) {
       tokens.push(token);
-      if (token.type === types.eof.label) { break; }
+      if (token.type === types.eof.label) { break }
     }
     return tokens
   };
@@ -835,23 +826,29 @@
           }
           this.current = i + 2;
         } else {
-          break;
+          break
         }
-      } else if (ch === '\n' || ch === '\t' || ch === " " || ch === "\r" || ch === "\f") {
+      } else if (
+        ch === '\n' ||
+        ch === '\t' ||
+        ch === ' ' ||
+        ch === '\r' ||
+        ch === '\f'
+      ) {
         this.current++;
       } else {
-        break;
+        break
       }
     }
   };
 
   /**
    * @desc 读取一个字符，并且指针往下移
-   * @returns 
+   * @returns
    */
   Lexer.prototype.getChar = function getChar () {
     if (this.current === this.input.length) {
-      return null;
+      return null
     }
 
     var start = this.current;
@@ -868,14 +865,14 @@
 
   /**
    * @desc 读取 1 个 token
-   * @returns 
+   * @returns
    */
   Lexer.prototype.read = function read () {
     this.skipSpaceAndComment();
     var mchar = this.getChar();
 
     if (mchar == null) {
-      return this.genToken(types.eof);
+      return this.genToken(types.eof)
     }
 
     switch (mchar) {
@@ -910,7 +907,7 @@
           return this.genToken(types.op_eq, '==', this.current - 2)
         } else {
           this.unGetChar();
-          return this.genToken(types.op_assign, "=", this.current - 1)
+          return this.genToken(types.op_assign, '=', this.current - 1)
         }
       }
 
@@ -920,7 +917,7 @@
           return this.genToken(types.op_ne, '!=', this.current - 2)
         } else {
           this.unGetChar();
-          return this.genToken(types.op_not, "!", this.current - 1)
+          return this.genToken(types.op_not, '!', this.current - 1)
         }
       }
 
@@ -929,9 +926,11 @@
       case '|': {
         if (this.getChar() === mchar) {
           var type = mchar === '&&' ? types.op_and : types.op_or;
-          return this.genToken(type, mchar + mchar, this.current - 2);
+          return this.genToken(type, mchar + mchar, this.current - 2)
         } else {
-          throw new Error('invalid character:' + mchar + ' in ' + this.current - 2)
+          throw new Error(
+            'invalid character:' + mchar + ' in ' + this.current - 2
+          )
         }
       }
 
@@ -949,7 +948,7 @@
         } else {
           if (mchar !== null) { this.unGetChar(); }
           var t$1 = mchar === '+' ? types.op_add : types.op_minus;
-          return this.genToken(t$1, mchar, start);
+          return this.genToken(t$1, mchar, start)
         }
       }
 
@@ -964,7 +963,7 @@
         } else {
           if (mchar !== null) { this.unGetChar(); }
           var t$2 = mchar === '*' ? types.op_mul : types.op_div;
-          return this.genToken(t$2, mchar, start$1);
+          return this.genToken(t$2, mchar, start$1)
         }
       }
 
@@ -1015,7 +1014,7 @@
           }
 
           if (this.isKeyword(value$2)) {
-            return this.genToken(keywords[value$2], value$2, start$4);
+            return this.genToken(keywords[value$2], value$2, start$4)
           }
 
           return this.genToken(types.name, value$2, start$4)
@@ -1027,22 +1026,22 @@
 
   /**
    * @desc 前瞻一个 token
-   * @returns 
+   * @returns
    */
   Lexer.prototype.LookAhead = function LookAhead () {
     var token = this.read();
     if (token && token.loc) {
       this.current = token.loc.start;
     }
-    return token.type;
+    return token.type
   };
 
   /**
    * @desc 创建一个 token
-   * @param {*} type 
-   * @param {*} value 
-   * @param {*} start 
-   * @returns 
+   * @param {*} type
+   * @param {*} value
+   * @param {*} start
+   * @returns
    */
   Lexer.prototype.genToken = function genToken (type, value, start) {
     var token = new Token(type.keyword || type.label, value);
@@ -1056,12 +1055,12 @@
   };
 
   Lexer.prototype.raise = function raise (pos, message) {
-    throw new SyntaxError(message + " in " + pos);
+    throw new SyntaxError(message + " in " + pos)
   };
 
   /**
    * @desc 是否读完
-   * @returns 
+   * @returns
    */
   Lexer.prototype.isEof = function isEof () {
     return this.current === this.input.length

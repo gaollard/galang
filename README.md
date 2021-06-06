@@ -35,7 +35,7 @@ exp ? exp : exp
 - 变量声明
 - for 语句
 - switch 语句
-- while/do 语句
+- while 语句
 - 函数定义
 - 函数调用
 - if 语句
