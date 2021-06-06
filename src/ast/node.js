@@ -179,3 +179,13 @@ export class DefaultStatement extends Node {
     this.type = 'DefaultStatement';
   }
 }
+
+export class IfStatement extends Node {
+  constructor(params, test, consequent, alternate) {
+    super(params);
+    this.type = 'IfStatement';
+    this.test = test;
+    this.consequent = consequent;
+    this.alternate = alternate;
+  }
+}

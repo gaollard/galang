@@ -2,6 +2,7 @@ import { Parser } from './parser'
 import {
   EmptyStat,
   Identifier,
+  IfStatement,
   Program,
   SwitchCase,
   SwitchStatement,
@@ -17,8 +18,9 @@ const pp = Parser.prototype
 stat ::=  ‘;’
 	| WhileStat https://www.processon.com/diagraming/60bbcba00e3e7468f4b8af35
   | VariableDeclaration https://www.processon.com/diagraming/60b9de0ee401fd4c8ba4beaf
-  | SwitchStat
+  | SwitchStat https://www.processon.com/diagraming/60bbccf4637689502feab733
   | BreakStatement
+  | IfStatment https://www.processon.com/diagraming/60bc7f337d9c0879370ed5f0
 */
 
 pp.parseTopLevel = function () {
@@ -42,6 +44,8 @@ pp.parseStatement = function () {
       return this.parseVarStatement()
     case tt._switch.label:
       return this.parseSwitchStat()
+    case tt._if.label:
+      return this.parseIfStat();
     default:
       return this.parseExp()
   }
@@ -123,6 +127,31 @@ pp.parseSwitchStat = function () {
   return new SwitchStatement({}, discriminant, cases)
 }
 
+// if a > a
 pp.parseIfStat = function () {
+  this.expect(tt._if.label);
+  this.expect(tt.parenL.label);
+  let test = this.parseExp();
+  this.expect(tt.parenR.label);
 
+  let alternate = null;
+  let consequent = null;
+
+  if (!(consequent = this.parseStatement())) {
+    this.raise("Unexpected end of input")
+  }
+
+  if (this.LookAhead() === tt._else.label) {
+    this.nextToken();
+    if (this.LookAhead() === tt._if.label) {
+      alternate = this.parseIfStat();
+    } else {
+      alternate = this.parseStatement();
+    }
+    if (!alternate) {
+      this.raise("Unexpected end of input")
+    }
+  }
+
+  return new IfStatement({}, test, consequent, alternate);
 }

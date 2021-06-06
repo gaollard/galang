@@ -35,16 +35,21 @@
 
   // var code = `let a = 10, b = 20, c, d = b++`
 
-  var code = `
-    switch(a) {
-      case 1:
-        a;
-      case 2:
-        b;
-      default:
-        c
-    }
-  `
+  // var code = `
+  //   switch(a) {
+  //     case 1:
+  //       a;
+  //     case 2:
+  //       b;
+  //     default:
+  //       c
+  //   }
+  // `
+
+  // var code  = `if(a) { a++ }`
+  // var code  = `if(a) { a++ } else b++`
+  // var code = `if(a) { a++ } else if(b) { b++ } else {c}`
+  var code = `if (a) a++ else b++`
 
   var lexer = new galang.Lexer(code);
   var parser = new galang.Parser({

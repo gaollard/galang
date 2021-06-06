@@ -6,7 +6,8 @@ export default {
     {
       file: "dist/galang.umd.js",
       format: "umd",
-      name: "galang"
+      name: "galang",
+      sourcemap: true
     },
     {
       file: "dist/galang.ems.js",
@@ -15,5 +16,5 @@ export default {
   ],
   plugins: [
     buble({transforms: {dangerousForOf: true}})
-  ]
+  ],
 }

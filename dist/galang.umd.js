@@ -309,6 +309,22 @@
     return DefaultStatement;
   })(Node));
 
+  var IfStatement = /*@__PURE__*/(function (Node) {
+    function IfStatement(params, test, consequent, alternate) {
+      Node.call(this, params);
+      this.type = 'IfStatement';
+      this.test = test;
+      this.consequent = consequent;
+      this.alternate = alternate;
+    }
+
+    if ( Node ) IfStatement.__proto__ = Node;
+    IfStatement.prototype = Object.create( Node && Node.prototype );
+    IfStatement.prototype.constructor = IfStatement;
+
+    return IfStatement;
+  }(Node));
+
   var Parser = function Parser(options) {
     this.lexer = options.lexer;
     this.tokens = options.tokens;
@@ -647,8 +663,9 @@
   stat ::=  ‘;’
   	| WhileStat https://www.processon.com/diagraming/60bbcba00e3e7468f4b8af35
     | VariableDeclaration https://www.processon.com/diagraming/60b9de0ee401fd4c8ba4beaf
-    | SwitchStat
+    | SwitchStat https://www.processon.com/diagraming/60bbccf4637689502feab733
     | BreakStatement
+    | IfStatment https://www.processon.com/diagraming/60bc7f337d9c0879370ed5f0
   */
 
   pp$1.parseTopLevel = function () {
@@ -672,6 +689,8 @@
         return this.parseVarStatement()
       case types._switch.label:
         return this.parseSwitchStat()
+      case types._if.label:
+        return this.parseIfStat();
       default:
         return this.parseExp()
     }
@@ -751,8 +770,33 @@
     return new SwitchStatement({}, discriminant, cases)
   };
 
+  // if a > a
   pp$1.parseIfStat = function () {
+    this.expect(types._if.label);
+    this.expect(types.parenL.label);
+    var test = this.parseExp();
+    this.expect(types.parenR.label);
 
+    var alternate = null;
+    var consequent = null;
+
+    if (!(consequent = this.parseStatement())) {
+      this.raise("Unexpected end of input");
+    }
+
+    if (this.LookAhead() === types._else.label) {
+      this.nextToken();
+      if (this.LookAhead() === types._if.label) {
+        alternate = this.parseIfStat();
+      } else {
+        alternate = this.parseStatement();
+      }
+      if (!alternate) {
+        this.raise("Unexpected end of input");
+      }
+    }
+
+    return new IfStatement({}, test, consequent, alternate);
   };
 
   var pp = Parser.prototype;
@@ -1072,3 +1116,4 @@
   Object.defineProperty(exports, '__esModule', { value: true });
 
 })));
+//# sourceMappingURL=galang.umd.js.map
