@@ -14,6 +14,14 @@ export class Program extends Node {
   }
 };
 
+export class ExpressionStatement extends Node {
+  constructor(params, expression) {
+    super(params);
+    this.type = 'ExpressionStatement';
+    this.expression = expression;
+  }
+};
+
 export class FalseExp extends Node {
   constructor(params) {
     super(params);

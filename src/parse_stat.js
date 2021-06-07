@@ -1,6 +1,7 @@
 import { Parser } from './parser'
 import {
   EmptyStat,
+  ExpressionStatement,
   ForStatment,
   FunctionDeclaration,
   Identifier,
@@ -28,6 +29,11 @@ stat ::=  ‘;’
   | FunctionDeclaration https://www.processon.com/diagraming/60bd8bb30791297a3f01ba38
 */
 
+// if semicolon exit then eat it
+pp.semicolon = function () {
+  this.eat(tt.semi.label)
+}
+
 pp.parseTopLevel = function () {
   const node = new Program()
   while (this.lexer.LookAhead() !== tt.eof.label) {
@@ -40,34 +46,40 @@ pp.parseTopLevel = function () {
 pp.parseStatement = function () {
   switch (this.LookAhead()) {
     case tt.semi.label:
-      return this.parseEmptyStat()
+      return this.parseEmptyStatement()
     case tt.braceL.label:
       return this.parseBlock()
     case tt._while.label:
-      return this.parseWhileStat()
+      return this.parseWhileStatement()
     case tt._let.label:
       return this.parseVarStatement()
     case tt._switch.label:
       return this.parseSwitchStat()
     case tt._if.label:
-      return this.parseIfStat();
+      return this.parseIfStat()
     case tt._for.label:
-      return this.parseForStatment();
+      return this.parseForStatement()
     case tt._function.label:
-      return this.parseFunctionStatement();
+      return this.parseFunctionStatement()
     case tt._return.label:
-      return this.parseReturnStatement();
+      return this.parseReturnStatement()
     default:
-      return this.parseExp()
+      return this.parseExpressionStatement()
   }
 }
 
-pp.parseEmptyStat = function () {
-  this.nextToken()
+pp.parseExpressionStatement = function () {
+  const node = new ExpressionStatement({}, this.parseExp())
+  this.semicolon()
+  return node
+}
+
+pp.parseEmptyStatement = function () {
+  this.expect(tt.semi.label);
   return new EmptyStat()
 }
 
-pp.parseWhileStat = function () {
+pp.parseWhileStatement = function () {
   this.eat(tt._while.label)
   let test = this.parseExp()
   let block = this.parseBlock()
@@ -76,7 +88,9 @@ pp.parseWhileStat = function () {
 
 pp.parseVarStatement = function () {
   const kind = this.nextToken().value
-  return new VariableDeclaration({}, kind, this.parseVar())
+  const varList = this.parseVar()
+  this.semicolon();
+  return new VariableDeclaration({}, kind, varList)
 }
 
 pp.parseVar = function () {
@@ -112,26 +126,26 @@ pp.parseSwitchStat = function () {
   this.expect(tt.parenR.label)
   this.expect(tt.braceL.label)
 
-  let cases = [];
-  let cur = null;
+  let cases = []
+  let cur = null
 
-  for (let sawDefault = false; this.LookAhead() !== tt.braceR.label;) {
-    let type = this.LookAhead();
-    let isCase = type === tt._case.label;
-    let isDefualt = type === tt._default.label;
+  for (let sawDefault = false; this.LookAhead() !== tt.braceR.label; ) {
+    let type = this.LookAhead()
+    let isCase = type === tt._case.label
+    let isDefualt = type === tt._default.label
     if (isCase || isDefualt) {
-      let test = null;
+      let test = null
       this.nextToken()
       if (isCase) {
-        test = this.parseExp();
+        test = this.parseExp()
       } else {
-        sawDefault = true;
+        sawDefault = true
       }
       this.expect(tt.colon.label)
-      cur = new SwitchCase({}, test, []);
+      cur = new SwitchCase({}, test, [])
       cases.push(cur)
     } else {
-      cur.consequent.push(this.parseStatement());
+      cur.consequent.push(this.parseStatement())
     }
   }
   this.expect(tt.braceR.label)
@@ -140,100 +154,103 @@ pp.parseSwitchStat = function () {
 
 // if a > a
 pp.parseIfStat = function () {
-  this.expect(tt._if.label);
-  this.expect(tt.parenL.label);
-  let test = this.parseExp();
-  this.expect(tt.parenR.label);
+  this.expect(tt._if.label)
+  this.expect(tt.parenL.label)
+  let test = this.parseExp()
+  this.expect(tt.parenR.label)
 
-  let alternate = null;
-  let consequent = null;
+  let alternate = null
+  let consequent = null
 
   if (!(consequent = this.parseStatement())) {
-    this.raise("Unexpected end of input")
+    this.raise('Unexpected end of input')
   }
 
   if (this.LookAhead() === tt._else.label) {
-    this.nextToken();
+    this.nextToken()
     if (this.LookAhead() === tt._if.label) {
-      alternate = this.parseIfStat();
+      alternate = this.parseIfStat()
     } else {
-      alternate = this.parseStatement();
+      alternate = this.parseStatement()
     }
     if (!alternate) {
-      this.raise("Unexpected end of input")
+      this.raise('Unexpected end of input')
     }
   }
 
-  return new IfStatement({}, test, consequent, alternate);
+  return new IfStatement({}, test, consequent, alternate)
 }
 
-pp.parseForStatment = function () {
-  debugger
-  this.expect(tt._for.label);
-  this.expect(tt.parenL.label);
+pp.parseForStatement = function () {
+  this.expect(tt._for.label)
+  this.expect(tt.parenL.label)
 
-  let init = null;
+  let init = null
 
   if (this.LookAhead() === tt._let.label) {
-    init = this.parseVarStatement();
+    init = this.parseVarStatement()
   } else if (this.LookAhead() === tt.semi.label) {
     init = null
   } else {
-    init = this.parseExp();
+    init = this.parseExp()
   }
 
-  this.expect(tt.semi.label);
+  this.expect(tt.semi.label)
 
-  let test = this.LookAhead() === tt.semi.label ? null : this.parseExp();
+  let test = this.LookAhead() === tt.semi.label ? null : this.parseExp()
 
-  this.expect(tt.semi.label);
+  this.expect(tt.semi.label)
 
-  let update = this.LookAhead() === tt.parenR.label ? null : this.parseExp();
+  let update = this.LookAhead() === tt.parenR.label ? null : this.parseExp()
 
-  this.expect(tt.parenR.label);
+  this.expect(tt.parenR.label)
 
-  let body = this.parseBlock();
+  let body = this.parseBlock()
 
-  return new ForStatment({}, init, test, update, body);
+  return new ForStatment({}, init, test, update, body)
 }
 
 pp.parseFunctionStatement = function () {
-  debugger;
-  this.expect(tt._function.label);
-  const node = new FunctionDeclaration({}, null, [], null);
+  this.expect(tt._function.label)
+  const node = new FunctionDeclaration({}, null, [], null)
 
-  node.id = this.parseIdentifier();
+  node.id = this.parseIdentifier()
   if (node.id === null) {
-    this.raise("unexpected identifier");
+    this.raise('unexpected identifier')
   }
-  this.expect(tt.parenL.label);
+  this.expect(tt.parenL.label)
 
   if (this.LookAhead() === tt.parenR.label) {
-    node.params = [];
+    node.params = []
   } else {
     const getId = () => {
-      let id = this.parseIdentifier();
+      let id = this.parseIdentifier()
       if (id === null) {
-        this.raise("unexpected identifier");
+        this.raise('unexpected identifier')
       } else {
-        node.params.push(id);
+        node.params.push(id)
       }
     }
-    getId();
-    while(this.LookAhead() === tt.comma.label) {
-      this.nextToken();
-      getId();
+    getId()
+    while (this.LookAhead() === tt.comma.label) {
+      this.nextToken()
+      getId()
     }
   }
 
-  this.expect(tt.parenR.label);
+  this.expect(tt.parenR.label)
 
-  node.body = this.parseBlock();
+  node.body = this.parseBlock()
 
-  return node;
+  return node
 }
 
 pp.parseReturnStatement = function () {
-  this.expect(tt._return.label);
-  return new ReturnStatement({}, this.parseStatement());
+  const node = new ReturnStatement({}, null)
+  this.expect(tt._return.label)
+  if (!this.eat(tt.semi.label)) {
+    node.argument = this.parseExp()
+  }
+  this.semicolon()
+  return node
 }

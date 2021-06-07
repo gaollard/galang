@@ -23,6 +23,19 @@
 
     return Program;
   }(Node));
+  var ExpressionStatement = /*@__PURE__*/(function (Node) {
+    function ExpressionStatement(params, expression) {
+      Node.call(this, params);
+      this.type = 'ExpressionStatement';
+      this.expression = expression;
+    }
+
+    if ( Node ) ExpressionStatement.__proto__ = Node;
+    ExpressionStatement.prototype = Object.create( Node && Node.prototype );
+    ExpressionStatement.prototype.constructor = ExpressionStatement;
+
+    return ExpressionStatement;
+  }(Node));
   var FalseExp = /*@__PURE__*/(function (Node) {
     function FalseExp(params) {
       Node.call(this, params);
@@ -724,6 +737,11 @@
     | FunctionDeclaration https://www.processon.com/diagraming/60bd8bb30791297a3f01ba38
   */
 
+  // if semicolon exit then eat it
+  pp$1.semicolon = function () {
+    this.eat(types.semi.label);
+  };
+
   pp$1.parseTopLevel = function () {
     var node = new Program();
     while (this.lexer.LookAhead() !== types.eof.label) {
@@ -736,34 +754,40 @@
   pp$1.parseStatement = function () {
     switch (this.LookAhead()) {
       case types.semi.label:
-        return this.parseEmptyStat()
+        return this.parseEmptyStatement()
       case types.braceL.label:
         return this.parseBlock()
       case types._while.label:
-        return this.parseWhileStat()
+        return this.parseWhileStatement()
       case types._let.label:
         return this.parseVarStatement()
       case types._switch.label:
         return this.parseSwitchStat()
       case types._if.label:
-        return this.parseIfStat();
+        return this.parseIfStat()
       case types._for.label:
-        return this.parseForStatment();
+        return this.parseForStatement()
       case types._function.label:
-        return this.parseFunctionStatement();
+        return this.parseFunctionStatement()
       case types._return.label:
-        return this.parseReturnStatement();
+        return this.parseReturnStatement()
       default:
-        return this.parseExp()
+        return this.parseExpressionStatement()
     }
   };
 
-  pp$1.parseEmptyStat = function () {
-    this.nextToken();
+  pp$1.parseExpressionStatement = function () {
+    var node = new ExpressionStatement({}, this.parseExp());
+    this.semicolon();
+    return node
+  };
+
+  pp$1.parseEmptyStatement = function () {
+    this.expect(types.semi.label);
     return new EmptyStat()
   };
 
-  pp$1.parseWhileStat = function () {
+  pp$1.parseWhileStatement = function () {
     this.eat(types._while.label);
     var test = this.parseExp();
     var block = this.parseBlock();
@@ -772,7 +796,9 @@
 
   pp$1.parseVarStatement = function () {
     var kind = this.nextToken().value;
-    return new VariableDeclaration({}, kind, this.parseVar())
+    var varList = this.parseVar();
+    this.semicolon();
+    return new VariableDeclaration({}, kind, varList)
   };
 
   pp$1.parseVar = function () {
@@ -811,7 +837,7 @@
     var cases = [];
     var cur = null;
 
-    for (; this.LookAhead() !== types.braceR.label;) {
+    for (; this.LookAhead() !== types.braceR.label; ) {
       var type = this.LookAhead();
       var isCase = type === types._case.label;
       var isDefualt = type === types._default.label;
@@ -843,7 +869,7 @@
     var consequent = null;
 
     if (!(consequent = this.parseStatement())) {
-      this.raise("Unexpected end of input");
+      this.raise('Unexpected end of input');
     }
 
     if (this.LookAhead() === types._else.label) {
@@ -854,15 +880,14 @@
         alternate = this.parseStatement();
       }
       if (!alternate) {
-        this.raise("Unexpected end of input");
+        this.raise('Unexpected end of input');
       }
     }
 
-    return new IfStatement({}, test, consequent, alternate);
+    return new IfStatement({}, test, consequent, alternate)
   };
 
-  pp$1.parseForStatment = function () {
-    debugger
+  pp$1.parseForStatement = function () {
     this.expect(types._for.label);
     this.expect(types.parenL.label);
 
@@ -888,19 +913,18 @@
 
     var body = this.parseBlock();
 
-    return new ForStatment({}, init, test, update, body);
+    return new ForStatment({}, init, test, update, body)
   };
 
   pp$1.parseFunctionStatement = function () {
     var this$1$1 = this;
 
-    debugger;
     this.expect(types._function.label);
     var node = new FunctionDeclaration({}, null, [], null);
 
     node.id = this.parseIdentifier();
     if (node.id === null) {
-      this.raise("unexpected identifier");
+      this.raise('unexpected identifier');
     }
     this.expect(types.parenL.label);
 
@@ -910,13 +934,13 @@
       var getId = function () {
         var id = this$1$1.parseIdentifier();
         if (id === null) {
-          this$1$1.raise("unexpected identifier");
+          this$1$1.raise('unexpected identifier');
         } else {
           node.params.push(id);
         }
       };
       getId();
-      while(this.LookAhead() === types.comma.label) {
+      while (this.LookAhead() === types.comma.label) {
         this.nextToken();
         getId();
       }
@@ -926,12 +950,17 @@
 
     node.body = this.parseBlock();
 
-    return node;
+    return node
   };
 
   pp$1.parseReturnStatement = function () {
+    var node = new ReturnStatement({}, null);
     this.expect(types._return.label);
-    return new ReturnStatement({}, this.parseStatement());
+    if (!this.eat(types.semi.label)) {
+      node.argument = this.parseExp();
+    }
+    this.semicolon();
+    return node
   };
 
   var pp = Parser.prototype;
