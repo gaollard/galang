@@ -1,6 +1,6 @@
-import './parse_exp';
-import './parse_stat';
-import './parse_block';
+import './parser/parse_exp';
+import './parser/parse_stat';
+import './parser/parse_block';
 
-export { Lexer } from './lexer';
-export { Parser } from './parser';
+export { Lexer } from './parser/lexer';
+export { Parser } from './parser/parser';

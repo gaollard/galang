@@ -1,4 +1,4 @@
-import { BlockStat } from './ast/node'
+import { BlockStat } from '../ast/node'
 import { Parser } from './parser'
 import { types as tt } from './token'
 

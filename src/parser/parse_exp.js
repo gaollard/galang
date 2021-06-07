@@ -1,4 +1,4 @@
-import { BinaryExp, ConditionExp, FalseExp, Identifier, NullExp, Numeral, StringLiteral, TrueExp, UnaryExp, UpdateExp, AssignmentExp } from './ast/node';
+import { BinaryExp, ConditionExp, FalseExp, Identifier, NullExp, Numeral, StringLiteral, TrueExp, UnaryExp, UpdateExp, AssignmentExp } from '../ast/node';
 import { Parser } from './parser';
 import { types as tt } from './token';
 

@@ -13,7 +13,7 @@ import {
   VariableDeclaration,
   VariableDeclarator,
   WhileStat,
-} from './ast/node'
+} from '../ast/node'
 import { types as tt } from './token'
 
 const pp = Parser.prototype
