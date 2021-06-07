@@ -200,3 +200,21 @@ export class ForStatment extends Node {
     this.body = body;
   }
 }
+
+export class FunctionDeclaration extends Node {
+  constructor(option, id, params, body) {
+    super(option);
+    this.type = 'FunctionDeclaration';
+    this.id = id;
+    this.params = params;
+    this.body = body;
+  }
+}
+
+export class ReturnStatement extends Node {
+  constructor(option, argument) {
+    super(option);
+    this.type = 'ReturnStatement';
+    this.argument = argument;
+  }
+}

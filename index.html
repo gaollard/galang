@@ -52,7 +52,9 @@
   // var code = `if (a) a++ else b++`
 
   // var code = `for(let i = 0; i != 10; i++) { i++ }`
-  var code = `for(;;) {}`
+  // var code = `for(;;) {}`
+
+  var code = `function fn (name, age) { return age++; }`
 
   var lexer = new galang.Lexer(code);
   var parser = new galang.Parser({

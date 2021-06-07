@@ -2,9 +2,11 @@ import { Parser } from './parser'
 import {
   EmptyStat,
   ForStatment,
+  FunctionDeclaration,
   Identifier,
   IfStatement,
   Program,
+  ReturnStatement,
   SwitchCase,
   SwitchStatement,
   VariableDeclaration,
@@ -23,6 +25,7 @@ stat ::=  ‘;’
   | BreakStatement
   | IfStatment https://www.processon.com/diagraming/60bc7f337d9c0879370ed5f0
   | ForStatment https://www.processon.com/diagraming/60bcd33d7d9c0879370f61a4
+  | FunctionDeclaration https://www.processon.com/diagraming/60bd8bb30791297a3f01ba38
 */
 
 pp.parseTopLevel = function () {
@@ -50,6 +53,10 @@ pp.parseStatement = function () {
       return this.parseIfStat();
     case tt._for.label:
       return this.parseForStatment();
+    case tt._function.label:
+      return this.parseFunctionStatement();
+    case tt._return.label:
+      return this.parseReturnStatement();
     default:
       return this.parseExp()
   }
@@ -188,4 +195,45 @@ pp.parseForStatment = function () {
   let body = this.parseBlock();
 
   return new ForStatment({}, init, test, update, body);
+}
+
+pp.parseFunctionStatement = function () {
+  debugger;
+  this.expect(tt._function.label);
+  const node = new FunctionDeclaration({}, null, [], null);
+
+  node.id = this.parseIdentifier();
+  if (node.id === null) {
+    this.raise("unexpected identifier");
+  }
+  this.expect(tt.parenL.label);
+
+  if (this.LookAhead() === tt.parenR.label) {
+    node.params = [];
+  } else {
+    const getId = () => {
+      let id = this.parseIdentifier();
+      if (id === null) {
+        this.raise("unexpected identifier");
+      } else {
+        node.params.push(id);
+      }
+    }
+    getId();
+    while(this.LookAhead() === tt.comma.label) {
+      this.nextToken();
+      getId();
+    }
+  }
+
+  this.expect(tt.parenR.label);
+
+  node.body = this.parseBlock();
+
+  return node;
+}
+
+pp.parseReturnStatement = function () {
+  this.expect(tt._return.label);
+  return new ReturnStatement({}, this.parseStatement());
 }

@@ -19,6 +19,13 @@ import { types as tt } from './token';
 
 const pp = Parser.prototype;
 
+pp.parseIdentifier = function () {
+  if (this.LookAhead() === tt.name.label) {
+    return new Identifier({}, this.nextToken().value);
+  }
+  return null;
+}
+
 pp.parseBasicExp = function () {
   switch (this.LookAhead()) {
     case tt._true.label:

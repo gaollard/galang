@@ -336,6 +336,36 @@ var ForStatment = /*@__PURE__*/(function (Node) {
   return ForStatment;
 }(Node));
 
+var FunctionDeclaration = /*@__PURE__*/(function (Node) {
+  function FunctionDeclaration(option, id, params, body) {
+    Node.call(this, option);
+    this.type = 'FunctionDeclaration';
+    this.id = id;
+    this.params = params;
+    this.body = body;
+  }
+
+  if ( Node ) FunctionDeclaration.__proto__ = Node;
+  FunctionDeclaration.prototype = Object.create( Node && Node.prototype );
+  FunctionDeclaration.prototype.constructor = FunctionDeclaration;
+
+  return FunctionDeclaration;
+}(Node));
+
+var ReturnStatement = /*@__PURE__*/(function (Node) {
+  function ReturnStatement(option, argument) {
+    Node.call(this, option);
+    this.type = 'ReturnStatement';
+    this.argument = argument;
+  }
+
+  if ( Node ) ReturnStatement.__proto__ = Node;
+  ReturnStatement.prototype = Object.create( Node && Node.prototype );
+  ReturnStatement.prototype.constructor = ReturnStatement;
+
+  return ReturnStatement;
+}(Node));
+
 var Parser = function Parser(options) {
   this.lexer = options.lexer;
   this.tokens = options.tokens;
@@ -488,6 +518,13 @@ var regUtil = {
 */
 
 var pp$2 = Parser.prototype;
+
+pp$2.parseIdentifier = function () {
+  if (this.LookAhead() === types.name.label) {
+    return new Identifier({}, this.nextToken().value);
+  }
+  return null;
+};
 
 pp$2.parseBasicExp = function () {
   switch (this.LookAhead()) {
@@ -678,6 +715,7 @@ stat ::=  ‘;’
   | BreakStatement
   | IfStatment https://www.processon.com/diagraming/60bc7f337d9c0879370ed5f0
   | ForStatment https://www.processon.com/diagraming/60bcd33d7d9c0879370f61a4
+  | FunctionDeclaration https://www.processon.com/diagraming/60bd8bb30791297a3f01ba38
 */
 
 pp$1.parseTopLevel = function () {
@@ -705,6 +743,10 @@ pp$1.parseStatement = function () {
       return this.parseIfStat();
     case types._for.label:
       return this.parseForStatment();
+    case types._function.label:
+      return this.parseFunctionStatement();
+    case types._return.label:
+      return this.parseReturnStatement();
     default:
       return this.parseExp()
   }
@@ -823,6 +865,8 @@ pp$1.parseForStatment = function () {
   if (this.LookAhead() === types._let.label) {
     init = this.parseVarStatement();
   } else if (this.LookAhead() === types.semi.label) {
+    init = null;
+  } else {
     init = this.parseExp();
   }
 
@@ -839,6 +883,49 @@ pp$1.parseForStatment = function () {
   var body = this.parseBlock();
 
   return new ForStatment({}, init, test, update, body);
+};
+
+pp$1.parseFunctionStatement = function () {
+  var this$1$1 = this;
+
+  debugger;
+  this.expect(types._function.label);
+  var node = new FunctionDeclaration({}, null, [], null);
+
+  node.id = this.parseIdentifier();
+  if (node.id === null) {
+    this.raise("unexpected identifier");
+  }
+  this.expect(types.parenL.label);
+
+  if (this.LookAhead() === types.parenR.label) {
+    node.params = [];
+  } else {
+    var getId = function () {
+      var id = this$1$1.parseIdentifier();
+      if (id === null) {
+        this$1$1.raise("unexpected identifier");
+      } else {
+        node.params.push(id);
+      }
+    };
+    getId();
+    while(this.LookAhead() === types.comma.label) {
+      this.nextToken();
+      getId();
+    }
+  }
+
+  this.expect(types.parenR.label);
+
+  node.body = this.parseBlock();
+
+  return node;
+};
+
+pp$1.parseReturnStatement = function () {
+  this.expect(types._return.label);
+  return new ReturnStatement({}, this.parseStatement());
 };
 
 var pp = Parser.prototype;
