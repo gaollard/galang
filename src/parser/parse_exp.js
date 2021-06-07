@@ -184,12 +184,12 @@ pp.parseAssignExp = function () {
   let exp = this.parseConditional();
   if (this.LookAhead()) {
     switch (this.LookAhead()) {
-      case tt.op_assign:
-      case tt.op_assign_1:
-      case tt.op_assign_2:
-      case tt.op_assign_3:
-      case tt.op_assign_4:
-      case tt.op_assign_5: {
+      case tt.op_assign.label:
+      case tt.op_assign_1.label:
+      case tt.op_assign_2.label:
+      case tt.op_assign_3.label:
+      case tt.op_assign_4.label:
+      case tt.op_assign_5.label: {
         if (exp.type !== "Identifier") {
           this.raise("Invalid left-hand side in assignment");
         }

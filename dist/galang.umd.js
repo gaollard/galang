@@ -704,12 +704,12 @@
     var exp = this.parseConditional();
     if (this.LookAhead()) {
       switch (this.LookAhead()) {
-        case types.op_assign:
-        case types.op_assign_1:
-        case types.op_assign_2:
-        case types.op_assign_3:
-        case types.op_assign_4:
-        case types.op_assign_5: {
+        case types.op_assign.label:
+        case types.op_assign_1.label:
+        case types.op_assign_2.label:
+        case types.op_assign_3.label:
+        case types.op_assign_4.label:
+        case types.op_assign_5.label: {
           if (exp.type !== "Identifier") {
             this.raise("Invalid left-hand side in assignment");
           }
@@ -753,6 +753,7 @@
   };
 
   pp$1.parseStatement = function () {
+    debugger
     switch (this.LookAhead()) {
       case types.semi.label:
         return this.parseEmptyStatement()
@@ -1275,6 +1276,66 @@
     return this.current === this.input.length
   };
 
+  var Env = function Env(prev) {
+    this.prev = prev || null;
+    this.store = {};
+  };
+
+  /**
+   * @desc 查询 key 值, key 需要先声明，否则抛出异常
+   * @param {string} key 
+   * @returns 
+   */
+  Env.prototype.get = function get (key) {
+    var env = this.findEnv(key);
+    if (env) {
+      return env.store[key];
+    } else {
+      throw new SyntaxError("undefined " + key);
+    }
+  };
+
+  /**
+   * 查询作用域
+   * @param {string}} key 
+   * @returns 
+   */
+  Env.prototype.findEnv = function findEnv (key) {
+    var env = this;
+    while(env) {
+      var keys = Object.keys(env.store);
+      if (keys.includes(key)) {
+        return env;
+      } else {
+        env = env.prev;
+      }
+    }
+    return null;
+  };
+
+  /**
+   * @desc 更新 key 值, key 需要先声明，否则抛出异常
+   * @param {string} key 
+   * @returns 
+   */
+  Env.prototype.update = function update (key, value) {
+    var env = this.findEnv(key);
+    if (env) {
+      env.store[key] = value;
+    } else {
+      throw new SyntaxError((key + " is not defined"));
+    }
+  };
+
+  /**
+   * 在当前环境中，添加 key
+   * @param {string} key 
+   * @param {*} value 
+   */
+  Env.prototype.add = function add (key, value) {
+    this.store[key] = value;
+  };
+
   function ProgramEval(env, node) {
     node.body.forEach(function (it) {
       StatementEval(env, it);
@@ -1283,10 +1344,12 @@
 
   function StatementEval(env, node) {
     switch(node.type) {
-      case 'ExpressionStatement':
-        return ExpressionStatementEval(env, node);
       case 'VariableDeclaration':
         return VariableDeclarationEval(env, node);
+      case 'BlockStat':
+        return BlockStatementEval(env, node);
+      default:
+        return ExpressionStatementEval(env, node);
     }
   }
 
@@ -1312,6 +1375,12 @@
         return ExpressionStatementEval(env, node.expression)
       case "BinaryExp":
         return BinaryExpEval(env, node);
+      
+      case "AssignmentExp":
+        return AssignmentExpEval(env, node);
+
+      case 'BlockStatement':
+        return BlockStatementEval(env, node);
     }
   }
 
@@ -1323,12 +1392,12 @@
     if (node.op == "++") {
       var oVal = IdentifierEval(env, node.argument);
       var nVal = oVal + 1;
-      env.put(node.argument.name, nVal);
+      env.update(node.argument.name, nVal);
       return node.prefix ? nVal : oVal;
     } else {
       var oVal$1 = IdentifierEval(env, node.argument);
       var nVal$1 = oVal$1 - 1;
-      env.put(node.argument.name, nVal$1);
+      env.update(node.argument.name, nVal$1);
       return node.prefix ? nVal$1 : oVal$1;
     }
   }
@@ -1358,46 +1427,30 @@
         return ExpressionStatementEval(env, node.left) * ExpressionStatementEval(env, node.right)
       case "/":
         return ExpressionStatementEval(env, node.left) / ExpressionStatementEval(env, node.right)
+      case "%":
+        return ExpressionStatementEval(env, node.left) % ExpressionStatementEval(env, node.right)
     }
   }
 
+  function BlockStatementEval(env, node) {
+    var blockEnv = new Env(env);
+    node.body.forEach(function (it) {
+      StatementEval(blockEnv, it);
+    });
+    console.log(blockEnv);
+  }
+
+  function AssignmentExpEval(env, node) {
+    return env.update(node.left.name, StatementEval(env, node.right))
+  }
+
   // global env
-  var gEnv = {
-    prev: null,
-    store: {},
-
-    get: function get(key) {
-      var env = this.findEnv(key);
-      return env.store[key];
-    },
-
-    findEnv: function findEnv (key) {
-      var env = this;
-      while(env) {
-        var keys = Object.keys(env.store);
-        if (keys.includes(key)) {
-          return env;
-        } else {
-          env = env.prev;
-        }
-      }
-      return this;
-    },
-
-    put: function put(key, value) {
-      var env = this.findEnv(key);
-      env.store[key] = value;
-    },
-
-    add: function add(key, value) {
-      this.store[key] = value;
-    }
-  };
+  var env = new Env(null);
 
   // entry
   function interpreter(program) {
-    ProgramEval(gEnv, program);
-    console.log(gEnv.store);
+    ProgramEval(env, program);
+    console.log(env.store);
   }
 
   exports.Lexer = Lexer;

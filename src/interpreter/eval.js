@@ -1,3 +1,5 @@
+import { Env } from './env';
+
 export function ProgramEval(env, node) {
   node.body.forEach(it => {
     StatementEval(env, it);
@@ -6,10 +8,12 @@ export function ProgramEval(env, node) {
 
 export function StatementEval(env, node) {
   switch(node.type) {
-    case 'ExpressionStatement':
-      return ExpressionStatementEval(env, node);
     case 'VariableDeclaration':
       return VariableDeclarationEval(env, node);
+    case 'BlockStat':
+      return BlockStatementEval(env, node);
+    default:
+      return ExpressionStatementEval(env, node);
   }
 }
 
@@ -35,6 +39,12 @@ export function ExpressionStatementEval(env, node) {
       return ExpressionStatementEval(env, node.expression)
     case "BinaryExp":
       return BinaryExpEval(env, node);
+    
+    case "AssignmentExp":
+      return AssignmentExpEval(env, node);
+
+    case 'BlockStatement':
+      return BlockStatementEval(env, node);
   }
 }
 
@@ -46,12 +56,12 @@ export function UpdateExpEval (env, node) {
   if (node.op == "++") {
     let oVal = IdentifierEval(env, node.argument)
     let nVal = oVal + 1;
-    env.put(node.argument.name, nVal);
+    env.update(node.argument.name, nVal);
     return node.prefix ? nVal : oVal;
   } else {
     let oVal = IdentifierEval(env, node.argument)
     let nVal = oVal - 1;
-    env.put(node.argument.name, nVal);
+    env.update(node.argument.name, nVal);
     return node.prefix ? nVal : oVal;
   }
 }
@@ -81,5 +91,18 @@ export function BinaryExpEval (env, node) {
       return ExpressionStatementEval(env, node.left) * ExpressionStatementEval(env, node.right)
     case "/":
       return ExpressionStatementEval(env, node.left) / ExpressionStatementEval(env, node.right)
+    case "%":
+      return ExpressionStatementEval(env, node.left) % ExpressionStatementEval(env, node.right)
   }
+}
+
+export function BlockStatementEval(env, node) {
+  const _env = new Env(env);
+  node.body.forEach(it => {
+    StatementEval(_env, it);
+  })
+}
+
+export function AssignmentExpEval(env, node) {
+  return env.update(node.left.name, StatementEval(env, node.right))
 }

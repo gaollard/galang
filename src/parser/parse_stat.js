@@ -44,6 +44,7 @@ pp.parseTopLevel = function () {
 }
 
 pp.parseStatement = function () {
+  debugger
   switch (this.LookAhead()) {
     case tt.semi.label:
       return this.parseEmptyStatement()
