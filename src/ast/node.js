@@ -60,28 +60,29 @@ export class StringLiteral extends Node {
 }
 
 export class Identifier extends Node {
-  constructor(params, value) {
+  constructor(params, name) {
     super(params);
     this.type = 'Identifier';
-    this.value = value;
+    this.name = name;
   }
 }
 
 export class UpdateExp extends Node {
-  constructor(params, op, id) {
+  constructor(params, op, argument, prefix) {
     super(params);
     this.type = 'UpdateExp';
     this.op = op;
-    this.id = id;
+    this.argument = argument;
+    this.prefix = prefix || false;
   }
 }
 
 export class UnaryExp extends Node {
-  constructor(params, op, exp) {
+  constructor(params, op, argument) {
     super(params);
     this.type = 'UnaryExp';
     this.op = op;
-    this.exp = exp;
+    this.argument = argument;
   }
 }
 

@@ -4,3 +4,4 @@ import './parser/parse_block';
 
 export { Lexer } from './parser/lexer';
 export { Parser } from './parser/parser';
+export { interpreter } from './interpreter/index'

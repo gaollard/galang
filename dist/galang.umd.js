@@ -104,10 +104,10 @@
   }(Node));
 
   var Identifier = /*@__PURE__*/(function (Node) {
-    function Identifier(params, value) {
+    function Identifier(params, name) {
       Node.call(this, params);
       this.type = 'Identifier';
-      this.value = value;
+      this.name = name;
     }
 
     if ( Node ) Identifier.__proto__ = Node;
@@ -118,11 +118,12 @@
   }(Node));
 
   var UpdateExp = /*@__PURE__*/(function (Node) {
-    function UpdateExp(params, op, id) {
+    function UpdateExp(params, op, argument, prefix) {
       Node.call(this, params);
       this.type = 'UpdateExp';
       this.op = op;
-      this.id = id;
+      this.argument = argument;
+      this.prefix = prefix || false;
     }
 
     if ( Node ) UpdateExp.__proto__ = Node;
@@ -133,11 +134,11 @@
   }(Node));
 
   var UnaryExp = /*@__PURE__*/(function (Node) {
-    function UnaryExp(params, op, exp) {
+    function UnaryExp(params, op, argument) {
       Node.call(this, params);
       this.type = 'UnaryExp';
       this.op = op;
-      this.exp = exp;
+      this.argument = argument;
     }
 
     if ( Node ) UnaryExp.__proto__ = Node;
@@ -1274,8 +1275,134 @@
     return this.current === this.input.length
   };
 
+  function ProgramEval(env, node) {
+    node.body.forEach(function (it) {
+      StatementEval(env, it);
+    });
+  }
+
+  function StatementEval(env, node) {
+    switch(node.type) {
+      case 'ExpressionStatement':
+        return ExpressionStatementEval(env, node);
+      case 'VariableDeclaration':
+        return VariableDeclarationEval(env, node);
+    }
+  }
+
+  function ExpressionStatementEval(env, node) {
+    switch(node.type) {
+      case 'FalseExp':
+        return false;
+      case 'TrueExp':
+        return true;
+      case 'NullExp':
+        return null;
+      case 'Numeral':
+        return Number(node.value);
+      case 'StringLiteral':
+        return node.value;
+      case 'Identifier':
+        return IdentifierEval(env, node);
+      case 'UpdateExp':
+        return UpdateExpEval(env, node);
+      case 'UnaryExp':
+        return UnaryExpEval(env, node);
+      case "ExpressionStatement":
+        return ExpressionStatementEval(env, node.expression)
+      case "BinaryExp":
+        return BinaryExpEval(env, node);
+    }
+  }
+
+  function IdentifierEval(env, node) {
+    return env.get(node.name);
+  }
+
+  function UpdateExpEval (env, node) {
+    if (node.op == "++") {
+      var oVal = IdentifierEval(env, node.argument);
+      var nVal = oVal + 1;
+      env.put(node.argument.name, nVal);
+      return node.prefix ? nVal : oVal;
+    } else {
+      var oVal$1 = IdentifierEval(env, node.argument);
+      var nVal$1 = oVal$1 - 1;
+      env.put(node.argument.name, nVal$1);
+      return node.prefix ? nVal$1 : oVal$1;
+    }
+  }
+
+  function UnaryExpEval (env, node) {
+    switch(node.op) {
+      case "-":
+        return -(ExpressionStatementEval(env, node.argument));
+      case "!":
+        return !(ExpressionStatementEval(env, node.argument));
+    }
+  }
+
+  function VariableDeclarationEval (env, node) {
+    node.declarations.forEach(function (it) {
+      env.add(it.id.name, ExpressionStatementEval(env, it.init));
+    });
+  }
+
+  function BinaryExpEval (env, node) {
+    switch(node.op) {
+      case "+":
+        return ExpressionStatementEval(env, node.left) + ExpressionStatementEval(env, node.right)
+      case "-":
+        return ExpressionStatementEval(env, node.left) - ExpressionStatementEval(env, node.right)
+      case "*":
+        return ExpressionStatementEval(env, node.left) * ExpressionStatementEval(env, node.right)
+      case "/":
+        return ExpressionStatementEval(env, node.left) / ExpressionStatementEval(env, node.right)
+    }
+  }
+
+  // global env
+  var gEnv = {
+    prev: null,
+    store: {},
+
+    get: function get(key) {
+      var env = this.findEnv(key);
+      return env.store[key];
+    },
+
+    findEnv: function findEnv (key) {
+      var env = this;
+      while(env) {
+        var keys = Object.keys(env.store);
+        if (keys.includes(key)) {
+          return env;
+        } else {
+          env = env.prev;
+        }
+      }
+      return this;
+    },
+
+    put: function put(key, value) {
+      var env = this.findEnv(key);
+      env.store[key] = value;
+    },
+
+    add: function add(key, value) {
+      this.store[key] = value;
+    }
+  };
+
+  // entry
+  function interpreter(program) {
+    ProgramEval(gEnv, program);
+    console.log(gEnv.store);
+  }
+
   exports.Lexer = Lexer;
   exports.Parser = Parser;
+  exports.interpreter = interpreter;
 
   Object.defineProperty(exports, '__esModule', { value: true });
 

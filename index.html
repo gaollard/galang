@@ -56,14 +56,24 @@
 
   // var code = `function fn (name, age) { return age++;; }`
 
-  var code = `a++;a`
+  var code = `
+    let a = 1;
+    a++;
+    a++;
+    a--;
+    let b = 2;
+    let c = a + b;
+    let d = c * c
+  ` //  a = 2;
 
   var lexer = new galang.Lexer(code);
   var parser = new galang.Parser({
     lexer
   });
 
-  debugger
-  console.log(parser.parse())
+  // debugger
+  var ast = parser.parse();
+  console.log(ast);
+  galang.interpreter(ast)
 </script>
 </html>
