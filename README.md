@@ -36,6 +36,4 @@ exp ? exp : exp
 - [x] if 语句
 - [x] switch 语句
 - [x] while 语句
-- for 语句
-- 函数定义
-- 函数调用
+- [x] for 语句

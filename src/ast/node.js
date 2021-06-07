@@ -189,3 +189,14 @@ export class IfStatement extends Node {
     this.alternate = alternate;
   }
 }
+
+export class ForStatment extends Node {
+  constructor(params, init, test, update, body) {
+    super(params);
+    this.type = 'ForStatment';
+    this.init = init;
+    this.test = test;
+    this.update = update;
+    this.body = body;
+  }
+}

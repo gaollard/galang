@@ -1,6 +1,7 @@
 import { Parser } from './parser'
 import {
   EmptyStat,
+  ForStatment,
   Identifier,
   IfStatement,
   Program,
@@ -21,6 +22,7 @@ stat ::=  ‘;’
   | SwitchStat https://www.processon.com/diagraming/60bbccf4637689502feab733
   | BreakStatement
   | IfStatment https://www.processon.com/diagraming/60bc7f337d9c0879370ed5f0
+  | ForStatment https://www.processon.com/diagraming/60bcd33d7d9c0879370f61a4
 */
 
 pp.parseTopLevel = function () {
@@ -46,6 +48,8 @@ pp.parseStatement = function () {
       return this.parseSwitchStat()
     case tt._if.label:
       return this.parseIfStat();
+    case tt._for.label:
+      return this.parseForStatment();
     default:
       return this.parseExp()
   }
@@ -154,4 +158,34 @@ pp.parseIfStat = function () {
   }
 
   return new IfStatement({}, test, consequent, alternate);
+}
+
+pp.parseForStatment = function () {
+  debugger
+  this.expect(tt._for.label);
+  this.expect(tt.parenL.label);
+
+  let init = null;
+
+  if (this.LookAhead() === tt._let.label) {
+    init = this.parseVarStatement();
+  } else if (this.LookAhead() === tt.semi.label) {
+    init = null
+  } else {
+    init = this.parseExp();
+  }
+
+  this.expect(tt.semi.label);
+
+  let test = this.LookAhead() === tt.semi.label ? null : this.parseExp();
+
+  this.expect(tt.semi.label);
+
+  let update = this.LookAhead() === tt.parenR.label ? null : this.parseExp();
+
+  this.expect(tt.parenR.label);
+
+  let body = this.parseBlock();
+
+  return new ForStatment({}, init, test, update, body);
 }

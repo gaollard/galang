@@ -325,6 +325,23 @@
     return IfStatement;
   }(Node));
 
+  var ForStatment = /*@__PURE__*/(function (Node) {
+    function ForStatment(params, init, test, update, body) {
+      Node.call(this, params);
+      this.type = 'ForStatment';
+      this.init = init;
+      this.test = test;
+      this.update = update;
+      this.body = body;
+    }
+
+    if ( Node ) ForStatment.__proto__ = Node;
+    ForStatment.prototype = Object.create( Node && Node.prototype );
+    ForStatment.prototype.constructor = ForStatment;
+
+    return ForStatment;
+  }(Node));
+
   var Parser = function Parser(options) {
     this.lexer = options.lexer;
     this.tokens = options.tokens;
@@ -666,6 +683,7 @@
     | SwitchStat https://www.processon.com/diagraming/60bbccf4637689502feab733
     | BreakStatement
     | IfStatment https://www.processon.com/diagraming/60bc7f337d9c0879370ed5f0
+    | ForStatment https://www.processon.com/diagraming/60bcd33d7d9c0879370f61a4
   */
 
   pp$1.parseTopLevel = function () {
@@ -691,6 +709,8 @@
         return this.parseSwitchStat()
       case types._if.label:
         return this.parseIfStat();
+      case types._for.label:
+        return this.parseForStatment();
       default:
         return this.parseExp()
     }
@@ -797,6 +817,34 @@
     }
 
     return new IfStatement({}, test, consequent, alternate);
+  };
+
+  pp$1.parseForStatment = function () {
+    debugger
+    this.expect(types._for.label);
+    this.expect(types.parenL.label);
+
+    var init = null;
+
+    if (this.LookAhead() === types._let.label) {
+      init = this.parseVarStatement();
+    } else if (this.LookAhead() === types.semi.label) {
+      init = this.parseExp();
+    }
+
+    this.expect(types.semi.label);
+
+    var test = this.LookAhead() === types.semi.label ? null : this.parseExp();
+
+    this.expect(types.semi.label);
+
+    var update = this.LookAhead() === types.parenR.label ? null : this.parseExp();
+
+    this.expect(types.parenR.label);
+
+    var body = this.parseBlock();
+
+    return new ForStatment({}, init, test, update, body);
   };
 
   var pp = Parser.prototype;
