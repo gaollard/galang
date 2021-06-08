@@ -1,4 +1,4 @@
-import { BinaryExp, ConditionExp, FalseExp, Identifier, NullExp, Numeral, StringLiteral, TrueExp, UnaryExp, UpdateExp, AssignmentExp } from '../ast/node';
+import { BinaryExp, ConditionExp, FalseExp, Identifier, NullExp, Numeral, StringLiteral, TrueExp, UnaryExp, UpdateExp, AssignmentExp, CallExpression } from '../ast/node';
 import { Parser } from './parser';
 import { types as tt } from './token';
 
@@ -14,10 +14,34 @@ import { types as tt } from './token';
   expMul      ::= expUna {('*' | '/' | '%') expUna}
   expUna      ::= {(‘!’ | ‘-’)} expUpt
   expUpt      ::= expBasic {('++' | '--')}
-  expBasic    ::= null | false | true | Numeral | LiteralString | Identifier | '(' exp ')'
+  expBasic    ::= null |
+                  false |
+                  true |
+                  Numeral |
+                  LiteralString |
+                  Identifier |
+                  '(' exp ')' |
+                  CallExp
+
+  CallExp     ::= Identifier "(" 参数列表 ")" 暂时只支持 fn() https://www.processon.com/diagraming/60bf7d717d9c087937157938
 */
 
 const pp = Parser.prototype;
+
+pp.parseCallExpression = function() {
+  let callee = tt.name.label
+  this.expect(tt.name.label);
+  this.expect(tt.parenL.label);
+  let args = [];
+  while(this.LookAhead() !== tt.eof.label && this.LookAhead() !== tt.parenR.label) {
+    args.push(this.parseExp());
+    if (!this.eat(tt.comma.label)) {
+      break;
+    }
+  }
+  this.expect(tt.parenR.label);
+  return new CallExpression({}, callee, args);
+}
 
 pp.parseIdentifier = function () {
   if (this.LookAhead() === tt.name.label) {
@@ -40,6 +64,9 @@ pp.parseBasicExp = function () {
     case tt.string.label:
       return new StringLiteral({}, this.nextToken().value);
     case tt.name.label:
+      if (this.LookAhead(2) === tt.parenL.label) {
+        return this.parseCallExpression();
+      }
       return new Identifier({}, this.nextToken().value)
 
     case tt.parenL.label: {

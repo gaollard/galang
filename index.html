@@ -68,7 +68,8 @@
 
     //  { let a = 3; b = 4}
   // var code = `let a = 10; { a = 3 }`
-  var code = `let a = 1; let a = 2;`
+  // function fn(c) { return c + 1 }; 
+  var code = `fn()`
 
   var lexer = new galang.Lexer(code);
   var parser = new galang.Parser({

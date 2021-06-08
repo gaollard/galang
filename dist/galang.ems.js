@@ -380,6 +380,21 @@ var ReturnStatement = /*@__PURE__*/(function (Node) {
   return ReturnStatement;
 }(Node));
 
+var CallExpression = /*@__PURE__*/(function (Node) {
+  function CallExpression(option, callee, args) {
+    Node.call(this, option);
+    this.type = 'CallExpression';
+    this.callee = callee;
+    this.args = args;
+  }
+
+  if ( Node ) CallExpression.__proto__ = Node;
+  CallExpression.prototype = Object.create( Node && Node.prototype );
+  CallExpression.prototype.constructor = CallExpression;
+
+  return CallExpression;
+}(Node));
+
 var Parser = function Parser(options) {
   this.lexer = options.lexer;
   this.tokens = options.tokens;
@@ -390,8 +405,10 @@ Parser.prototype.parse = function parse () {
   return this.parseTopLevel()
 };
 
-Parser.prototype.LookAhead = function LookAhead () {
-  return this.lexer.LookAhead();
+Parser.prototype.LookAhead = function LookAhead (index) {
+    if ( index === void 0 ) index = 1;
+
+  return this.lexer.LookAhead(index);
 };
 
 Parser.prototype.nextToken = function nextToken () {
@@ -528,10 +545,34 @@ var regUtil = {
   expMul      ::= expUna {('*' | '/' | '%') expUna}
   expUna      ::= {(‘!’ | ‘-’)} expUpt
   expUpt      ::= expBasic {('++' | '--')}
-  expBasic    ::= null | false | true | Numeral | LiteralString | Identifier | '(' exp ')'
+  expBasic    ::= null |
+                  false |
+                  true |
+                  Numeral |
+                  LiteralString |
+                  Identifier |
+                  '(' exp ')' |
+                  CallExp
+
+  CallExp     ::= Identifier "(" 参数列表 ")" 暂时只支持 fn() https://www.processon.com/diagraming/60bf7d717d9c087937157938
 */
 
 var pp$2 = Parser.prototype;
+
+pp$2.parseCallExpression = function() {
+  var callee = types.name.label;
+  this.expect(types.name.label);
+  this.expect(types.parenL.label);
+  var args = [];
+  while(this.LookAhead() !== types.eof.label && this.LookAhead() !== types.parenR.label) {
+    args.push(this.parseExp());
+    if (!this.eat(types.comma.label)) {
+      break;
+    }
+  }
+  this.expect(types.parenR.label);
+  return new CallExpression({}, callee, args);
+};
 
 pp$2.parseIdentifier = function () {
   if (this.LookAhead() === types.name.label) {
@@ -554,6 +595,9 @@ pp$2.parseBasicExp = function () {
     case types.string.label:
       return new StringLiteral({}, this.nextToken().value);
     case types.name.label:
+      if (this.LookAhead(2) === types.parenL.label) {
+        return this.parseCallExpression();
+      }
       return new Identifier({}, this.nextToken().value)
 
     case types.parenL.label: {
@@ -1232,10 +1276,24 @@ Lexer.prototype.read = function read () {
  * @desc 前瞻一个 token
  * @returns
  */
-Lexer.prototype.LookAhead = function LookAhead () {
-  var token = this.read();
-  if (token && token.loc) {
-    this.current = token.loc.start;
+Lexer.prototype.LookAhead = function LookAhead (index) {
+    if ( index === void 0 ) index = 1;
+
+  var token = this.genToken(types.eof);
+  var first = null;
+  for(var i = 0; i < index;) {
+    token = this.read();
+    if (!first) {
+      first = token;
+    }
+    if (token.type === types.eof) {
+      break;
+    } else {
+      i++;
+    }
+  }
+  if (first && first.loc) {
+    this.current = first.loc.start;
   }
   return token.type
 };
@@ -1348,6 +1406,8 @@ function StatementEval(env, node) {
       return VariableDeclarationEval(env, node);
     case 'BlockStat':
       return BlockStatementEval(env, node);
+    case 'FunctionDeclaration':
+      return FunctionDeclarationVal(env, node);
     default:
       return ExpressionStatementEval(env, node);
   }
@@ -1381,6 +1441,9 @@ function ExpressionStatementEval(env, node) {
 
     case 'BlockStatement':
       return BlockStatementEval(env, node);
+
+    case 'CallExpression':
+      return CallExpressionEval();
   }
 }
 
@@ -1441,6 +1504,14 @@ function BlockStatementEval(env, node) {
 
 function AssignmentExpEval(env, node) {
   return env.update(node.left.name, StatementEval(env, node.right))
+}
+
+function FunctionDeclarationVal(env, node) {
+  env.add(node.id.name, node);
+}
+
+function CallExpressionEval(env, node) {
+  
 }
 
 // global env

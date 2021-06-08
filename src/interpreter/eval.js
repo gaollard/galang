@@ -12,6 +12,8 @@ export function StatementEval(env, node) {
       return VariableDeclarationEval(env, node);
     case 'BlockStat':
       return BlockStatementEval(env, node);
+    case 'FunctionDeclaration':
+      return FunctionDeclarationVal(env, node);
     default:
       return ExpressionStatementEval(env, node);
   }
@@ -45,6 +47,9 @@ export function ExpressionStatementEval(env, node) {
 
     case 'BlockStatement':
       return BlockStatementEval(env, node);
+
+    case 'CallExpression':
+      return CallExpressionEval(env, node);
   }
 }
 
@@ -107,4 +112,10 @@ export function AssignmentExpEval(env, node) {
   return env.update(node.left.name, StatementEval(env, node.right))
 }
 
-export function FunctionDeclaration(env, node) {}
+export function FunctionDeclarationVal(env, node) {
+  env.add(node.id.name, node)
+}
+
+export function CallExpressionEval(env, node) {
+  
+}

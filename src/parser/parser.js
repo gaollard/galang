@@ -9,8 +9,8 @@ export class Parser {
     return this.parseTopLevel()
   }
 
-  LookAhead () {
-    return this.lexer.LookAhead();
+  LookAhead (index = 1) {
+    return this.lexer.LookAhead(index);
   }
 
   nextToken() {

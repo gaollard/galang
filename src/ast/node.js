@@ -227,3 +227,12 @@ export class ReturnStatement extends Node {
     this.argument = argument;
   }
 }
+
+export class CallExpression extends Node {
+  constructor(option, callee, args) {
+    super(option);
+    this.type = 'CallExpression';
+    this.callee = callee;
+    this.args = args;
+  }
+}

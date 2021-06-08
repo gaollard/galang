@@ -259,10 +259,22 @@ export class Lexer {
    * @desc 前瞻一个 token
    * @returns
    */
-  LookAhead() {
-    const token = this.read()
-    if (token && token.loc) {
-      this.current = token.loc.start
+  LookAhead(index = 1) {
+    let token = this.genToken(types.eof);
+    let first = null;
+    for(let i = 0; i < index;) {
+      token = this.read();
+      if (!first) {
+        first = token;
+      }
+      if (token.type === types.eof) {
+        break;
+      } else {
+        i++
+      }
+    }
+    if (first && first.loc) {
+      this.current = first.loc.start
     }
     return token.type
   }
