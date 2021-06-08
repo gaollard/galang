@@ -1270,9 +1270,11 @@ Lexer.prototype.isEof = function isEof () {
   return this.current === this.input.length
 };
 
+var envId = 0;
 var Env = function Env(prev) {
   this.prev = prev || null;
   this.store = {};
+  this.id = envId++;
 };
 
 /**
@@ -1322,12 +1324,16 @@ Env.prototype.update = function update (key, value) {
 };
 
 /**
- * 在当前环境中，添加 key
+ * 在当前环境中，添加 key，需要检查是否重复声明
  * @param {string} key 
  * @param {*} value 
  */
 Env.prototype.add = function add (key, value) {
-  this.store[key] = value;
+  if (Object.keys(this.store).includes(key)) {
+    throw new SyntaxError((key + " has been declared"));
+  } else {
+    this.store[key] = value;
+  }
 };
 
 function ProgramEval(env, node) {
@@ -1427,11 +1433,10 @@ function BinaryExpEval (env, node) {
 }
 
 function BlockStatementEval(env, node) {
-  var blockEnv = new Env(env);
+  var _env = new Env(env);
   node.body.forEach(function (it) {
-    StatementEval(blockEnv, it);
+    StatementEval(_env, it);
   });
-  console.log(blockEnv);
 }
 
 function AssignmentExpEval(env, node) {

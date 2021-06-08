@@ -100,9 +100,11 @@ export function BlockStatementEval(env, node) {
   const _env = new Env(env);
   node.body.forEach(it => {
     StatementEval(_env, it);
-  })
+  });
 }
 
 export function AssignmentExpEval(env, node) {
   return env.update(node.left.name, StatementEval(env, node.right))
 }
+
+export function FunctionDeclaration(env, node) {}

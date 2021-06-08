@@ -1,7 +1,9 @@
+let envId = 0;
 export class Env {
   constructor(prev) {
     this.prev = prev || null;
     this.store = {}
+    this.id = envId++;
   }
 
   /**
@@ -51,11 +53,15 @@ export class Env {
   }
 
   /**
-   * 在当前环境中，添加 key
+   * 在当前环境中，添加 key，需要检查是否重复声明
    * @param {string} key 
    * @param {*} value 
    */
   add(key, value) {
-    this.store[key] = value;
+    if (Object.keys(this.store).includes(key)) {
+      throw new SyntaxError(`${key} has been declared`);
+    } else {
+      this.store[key] = value;
+    }
   }
 }
